@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a100c" />
+  <title>Hemp Kush</title>
+  <link rel="stylesheet" href="game.css" />
+</head>
+<body>
+  <div class="shop" aria-hidden="true">
+    <div class="lamp"></div>
+    <p class="neon-sign">HEMP<br>KUSH</p>
+    <svg class="neon-leaf" viewBox="0 0 80 80">
+      <g fill="none" stroke="#7dff6a" stroke-width="3" stroke-linejoin="round">
+        <path d="M40 70c2-18 2-28 0-46" stroke="#b6ff8a"/>
+        <path d="M40 58c-14-2-22-12-24-24 10 2 18 8 24 16"/>
+        <path d="M40 58c14-2 22-12 24-24-10 2-18 8-24 16"/>
+        <path d="M40 44c-12-4-18-14-18-24 8 4 14 10 18 16"/>
+        <path d="M40 44c12-4 18-14 18-24-8 4-14 10-18 16"/>
+        <path d="M40 32c-8-6-10-14-8-22 6 6 8 12 8 18"/>
+        <path d="M40 32c8-6 10-14 8-22-6 6-8 12-8 18"/>
+      </g>
+    </svg>
+    <div class="shelf left"></div>
+    <div class="shelf right"></div>
+  </div>
+
+  <main class="app">
+    <section id="screen-title" class="screen title-screen">
+      <img class="title-shop" alt="" src="art/loja-recebe.jpg" />
+      <div class="title-ui">
+        <button type="button" id="title-settings" class="feel-open title-settings">Configurações</button>
+        <button type="button" id="title-feedback" class="title-feedback">Feedback</button>
+        <div id="feel-panel" class="feel-panel" hidden>
+          <label><input type="checkbox" id="feel-motion" checked /> Movimento</label>
+          <label><input type="checkbox" id="feel-flash" checked /> Flashes</label>
+          <label><input type="checkbox" id="feel-music" checked /> Música</label>
+          <label><input type="checkbox" id="feel-sfx" checked /> Efeitos</label>
+          <label><input type="checkbox" id="feel-haptic" checked /> Vibração</label>
+        </div>
+        <button type="button" id="title-play" class="title-play">Jogar</button>
+        <p id="title-version" class="title-version"></p>
+      </div>
+    </section>
+
+    <section id="screen-hire" class="screen hire" hidden>
+      <img class="hire-shop" alt="" src="art/loja-recebe.jpg" />
+      <button type="button" id="story-pass-shop" class="story-pass">História</button>
+      <div class="hire-talk">
+        <p class="hire-name" id="hire-name">Beto</p>
+        <p class="hire-line" id="hire-line"></p>
+        <div class="hire-demo" id="hire-demo" hidden></div>
+        <button type="button" id="hire-next">Continua</button>
+      </div>
+    </section>
+
+    <section id="screen-map" class="screen map-screen" hidden>
+      <div id="world-view" class="world-view">
+        <div class="world-sky" aria-hidden="true"></div>
+        <div class="world-far" aria-hidden="true"><i></i></div>
+        <div id="world-track" class="world-track"></div>
+      </div>
+      <div class="world-ui">
+        <p class="map-title">Hemp Kush</p>
+        <button type="button" id="world-back" class="world-back" hidden>Capítulos</button>
+        <p id="world-chap" class="world-chap-label"></p>
+        <p id="map-note" class="map-note"></p>
+        <button type="button" id="world-zoom" class="world-zoom">zoom</button>
+        <button type="button" id="story-pass" class="story-pass">História</button>
+      </div>
+      <button type="button" id="feel-open" class="feel-open map-feel">Sentir</button>
+    </section>
+
+    <section id="screen-district" class="screen dist-screen" hidden>
+      <button type="button" id="dist-back" class="dist-back">Mapa</button>
+      <p class="map-title" id="dist-title">Head Shop</p>
+      <p class="dist-sub" id="dist-sub">Fácil, médio, difícil. E de novo.</p>
+      <div id="dist-path" class="dist-path"></div>
+    </section>
+
+    <section id="screen-play" class="screen" hidden>
+      <header class="hud">
+        <div class="badge">
+          <small id="nivel-nome">Loja</small>
+          <strong id="nivel">1</strong>
+        </div>
+        <div class="scorebox">
+          <small>Pontuação</small>
+          <strong id="score">0</strong>
+          <div class="starbar" aria-hidden="true">
+            <i id="star-fill"></i>
+            <span class="star" id="star-1">🔥</span>
+            <span class="star" id="star-2">🔥</span>
+            <span class="star" id="star-3">🔥</span>
+          </div>
+        </div>
+        <div class="badge">
+          <small>Movimentos</small>
+          <strong id="moves">20</strong>
+        </div>
+        <div id="goals" class="goals"></div>
+      </header>
+      <div class="vibes" id="vibes" aria-hidden="true"><i id="vibes-fill"></i></div>
+      <div class="stage">
+        <div id="board" class="board"></div>
+      </div>
+      <p id="hint" class="hint">Arrasta uma peça para o lado.</p>
+      <footer class="tray" id="tray">
+        <button type="button" id="back" class="gear">Mapa</button>
+        <div class="boosts">
+          <button type="button" class="boost" data-tool="fino" id="boost-fino" aria-label="Fininho, o beck fino, limpa a linha">
+            <img alt="" src="art/prep/verde-fino.png" draggable="false" />
+            <span class="qty" id="qty-fino">1</span>
+          </button>
+          <button type="button" class="boost" data-tool="bomba" id="boost-bomba" aria-label="Beck grosso, abre em volta">
+            <img alt="" src="art/prep/ambar-bomba.png" draggable="false" />
+            <span class="qty" id="qty-bomba">1</span>
+          </button>
+          <button type="button" class="boost" data-tool="bong" id="boost-bong" aria-label="Bong, fuma a cor">
+            <img alt="" src="art/bong.png" draggable="false" />
+            <span class="qty" id="qty-bong">1</span>
+          </button>
+          <button type="button" class="boost" data-tool="pipe" id="boost-pipe" aria-label="Pipe, pega uma peça">
+            <img alt="" src="art/prep/roxo-pipe.png" draggable="false" />
+            <span class="qty" id="qty-pipe">1</span>
+          </button>
+        </div>
+      </footer>
+    </section>
+
+    <div id="loading" class="loading" hidden>
+      <div class="loading-bud">
+        <img class="sprout" alt="" src="art/verde.png" draggable="false" />
+        <p id="load-text">Abrindo a loja…</p>
+      </div>
+    </div>
+
+    <div id="brief" class="brief" hidden>
+      <div class="mesa">
+        <div class="mesa-nota">
+          <p id="brief-zone"></p>
+          <h1 id="brief-title">Nível</h1>
+          <p class="mesa-meta"><span id="brief-heat"></span><span id="brief-fires" class="modal-stars"></span></p>
+          <p id="brief-teach"></p>
+          <div class="mesa-stats">
+            <div><span>movimentos</span><b id="brief-moves"></b></div>
+            <div><span>recorde</span><b id="brief-you"></b></div>
+          </div>
+          <p class="mesa-acende">pra acender</p>
+          <ol id="brief-marks"></ol>
+          <button type="button" id="brief-back" class="mesa-x">voltar</button>
+        </div>
+        <div id="brief-goals"></div>
+        <button type="button" id="brief-go" class="mesa-seda" aria-label="Jogar">
+          <span>Jogar</span>
+        </button>
+        <button type="button" id="brief-feedback" class="brief-feedback">Feedback</button>
+      </div>
+    </div>
+
+    <div id="modal" class="modal" hidden>
+      <div class="card">
+        <h1 id="modal-title">Hemp Kush</h1>
+        <p id="modal-phase" class="modal-phase"></p>
+        <p id="modal-score" class="modal-score"></p>
+        <p id="modal-stars" class="modal-stars"></p>
+        <p id="modal-text"></p>
+        <p class="rate-ask">Como foi esta fase?</p>
+        <div class="rate" id="modal-rate" role="group" aria-label="Dificuldade da fase">
+          <button type="button" data-nota="fácil">fácil</button>
+          <button type="button" data-nota="na medida">na medida</button>
+          <button type="button" data-nota="difícil">difícil</button>
+          <button type="button" data-nota="muito difícil">muito difícil</button>
+        </div>
+        <p id="modal-rate-status" class="rate-status"></p>
+        <button type="button" id="modal-feedback" class="ghost">Feedback</button>
+        <button type="button" id="again">Jogar de novo</button>
+        <button type="button" id="to-map" class="ghost">Mapa</button>
+        <button type="button" id="to-next" class="ghost" hidden>Próxima fase</button>
+      </div>
+    </div>
+
+    <div id="feedback" class="feedback" hidden>
+      <form id="feedback-form" class="card">
+        <h1>Feedback</h1>
+        <p id="feedback-where"></p>
+        <textarea id="feedback-text" maxlength="800" rows="4" aria-label="Recado para o Heitor" placeholder="Fala com o Heitor."></textarea>
+        <p id="feedback-status"></p>
+        <button type="submit">Enviar</button>
+        <button type="button" id="feedback-close" class="ghost">Fechar</button>
+      </form>
+    </div>
+  </main>
+  <script src="feel.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
