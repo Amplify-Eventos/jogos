@@ -19,13 +19,13 @@ Entrada obrigatória: a pasta local do jogo e o nome que aparece no card.
 
 - O slug sai do nome: minúsculas, sem acento, qualquer coisa que não seja letra ou número vira hífen, hífen das pontas sai, no máximo 48 caracteres.
 - Exemplos: `Hemp Kush` vira `hemp-kush`. `Jogo 2` vira `jogo-2`.
-- Nome vazio ou slug `enviar` não serve. Pare e peça outro nome.
+- Nome vazio ou slug `enviar` ou `como` não serve. Pare e peça outro nome.
 
 ## O que mudar no repositório
 
 - Os arquivos do jogo ficam em `<slug>/`.
 - Se `<slug>/` já existe, apague essa pasta e coloque os arquivos novos. Isso substitui o jogo.
-- Não apague outras pastas. Não apague `enviar/`, `index.html` da raiz, `.nojekyll` nem `COMO-PUBLICAR.md`.
+- Não apague outras pastas. Não apague `enviar/`, `como/`, `index.html` da raiz, `.nojekyll` nem `COMO-PUBLICAR.md`.
 - Atualize `jogos.json`. É uma lista. Cada item tem `nome`, `slug` e `capa`.
 - Tire o item antigo com o mesmo slug, se houver, e acrescente o novo no fim.
 - Capa, nesta ordem: `art/loja-recebe.jpg`, `.jpeg`, `.png` ou `.webp`. Se não existir, a primeira imagem jpg, jpeg, png ou webp da pasta. Se não houver imagem, use `<slug>/index.html`.

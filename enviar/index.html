@@ -46,7 +46,7 @@
   <main>
     <p><a href="../">Jogos</a></p>
     <h1>Enviar jogo</h1>
-    <p>Escolhe a pasta que tem o index.html. Se o nome já existe, o jogo é trocado. A chave fica só neste navegador.</p>
+    <p>Escolhe a pasta que tem o index.html. Se o nome já existe, o jogo é trocado. A chave fica só neste navegador. O passo a passo está em <a href="../como/">Como publicar</a>.</p>
     <form id="form">
       <label for="nome">Nome do jogo</label>
       <input id="nome" type="text" required placeholder="Hemp Kush" />
@@ -106,7 +106,7 @@
       var slug = slugify(nome);
       var token = chaveEl.value.trim();
       var files = Array.from(document.getElementById("pasta").files || []);
-      if (!slug || slug === "enviar") {
+      if (!slug || slug === "enviar" || slug === "como") {
         estado("Esse nome não serve.");
         return;
       }

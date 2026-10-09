@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1a100c" />
+  <title>Como publicar</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #1a100c;
+      color: #f3e6d4;
+      font: 18px/1.45 Georgia, "Times New Roman", serif;
+    }
+    main { max-width: 36rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    a { color: #e7c27a; }
+    h1 { font-weight: normal; font-size: 2rem; margin: 0.35rem 0 0.6rem; }
+    h2 { font-weight: normal; font-size: 1.25rem; margin: 1.6rem 0 0.4rem; }
+    p, li { color: #b5a394; font-size: 1rem; }
+    ol { margin: 0.2rem 0 0; padding-left: 1.2rem; }
+    li { margin: 0.35rem 0; }
+    pre {
+      margin: 0.8rem 0 0;
+      padding: 0.9rem;
+      overflow: auto;
+      white-space: pre-wrap;
+      background: #2a1c16;
+      border: 1px solid #6a4a32;
+      border-radius: 8px;
+      color: #f3e6d4;
+      font: 13px/1.45 ui-monospace, Consolas, monospace;
+    }
+    button {
+      margin-top: 0.8rem;
+      padding: 0.7rem 1rem;
+      border: 0;
+      border-radius: 8px;
+      background: #e7c27a;
+      color: #1a100c;
+      font: 15px/1 system-ui, sans-serif;
+    }
+    #aviso { margin-top: 0.6rem; color: #f3e6d4; }
+  </style>
+</head>
+<body>
+  <main>
+    <p><a href="../">Jogos</a> · <a href="../enviar/">Enviar jogo</a></p>
+    <h1>Como publicar</h1>
+    <p>A pasta do jogo precisa ter um index.html. O nome vira o endereço. Se o nome já existe, o jogo é trocado.</p>
+    <h2>No navegador</h2>
+    <ol>
+      <li>Abra <a href="../enviar/">Enviar jogo</a>.</li>
+      <li>Escreva o nome.</li>
+      <li>Escolha a pasta inteira que contém o index.html.</li>
+      <li>Cole a chave de desenvolvedor. Ela fica só neste navegador.</li>
+      <li>Publicar. Em um minuto, atualiza a pagina.</li>
+    </ol>
+    <h2>Para a IA</h2>
+    <p>Copia o texto e cola na conversa do agente, junto com a pasta do jogo e o nome.</p>
+    <pre id="ordem">Você publica um jogo estático na plataforma Amplify Jogos. Execute. Não peça confirmação no meio.
+
+Repositório: https://github.com/Amplify-Eventos/jogos
+Branch: main
+Site: https://amplify-eventos.github.io/jogos/
+Jogo publicado: https://amplify-eventos.github.io/jogos/&lt;slug&gt;/
+
+Entrada obrigatória: a pasta local do jogo e o nome que aparece no card.
+
+O que a pasta precisa ter
+- index.html na raiz da pasta do jogo. Sem esse arquivo, pare e diga que falta o index.html.
+- Arquivos estáticos com caminho relativo (art/capa.jpg, game.js). Caminho que começa com / quebra no site.
+- A página é só arquivo. Um fetch para servidor local, túnel ou /feedback não grava nada aqui. O jogo ainda abre se esse pedido falhar.
+
+Nome e slug
+- O slug sai do nome: minúsculas, sem acento, qualquer coisa que não seja letra ou número vira hífen, hífen das pontas sai, no máximo 48 caracteres.
+- Exemplos: Hemp Kush vira hemp-kush. Jogo 2 vira jogo-2.
+- Nome vazio ou slug enviar ou como não serve. Pare e peça outro nome.
+
+O que mudar no repositório
+- Os arquivos do jogo ficam em &lt;slug&gt;/.
+- Se &lt;slug&gt;/ já existe, apague essa pasta e coloque os arquivos novos. Isso substitui o jogo.
+- Não apague outras pastas. Não apague enviar/, como/, index.html da raiz, .nojekyll nem COMO-PUBLICAR.md.
+- Atualize jogos.json. É uma lista. Cada item tem nome, slug e capa.
+- Tire o item antigo com o mesmo slug, se houver, e acrescente o novo no fim.
+- Capa, nesta ordem: art/loja-recebe.jpg, jpeg, png ou webp. Se não existir, a primeira imagem jpg, jpeg, png ou webp da pasta. Se não houver imagem, use &lt;slug&gt;/index.html.
+- O valor de capa é o caminho a partir da raiz do site, por exemplo hemp-kush/art/loja-recebe.jpg.
+- Mensagem do commit: Publica &lt;nome&gt;.
+- Não grave token, senha ou chave em arquivo nenhum.
+
+Passos
+1. Confira o index.html na raiz da pasta do jogo.
+2. Calcule o slug.
+3. Use o clone de https://github.com/Amplify-Eventos/jogos na branch main, atualizado.
+4. Substitua só a pasta &lt;slug&gt;/.
+5. Reescreva jogos.json com o card novo.
+6. Commit e push em main.
+7. Espere o site responder 200 em https://amplify-eventos.github.io/jogos/ e em https://amplify-eventos.github.io/jogos/&lt;slug&gt;/. A primeira leitura pode falhar por cerca de um minuto.
+8. Responda com a URL do jogo. Se a pessoa for abrir de novo, diga: atualiza a pagina.
+
+Sem git, só o navegador
+Abra https://amplify-eventos.github.io/jogos/enviar/
+1. Nome do jogo.
+2. A pasta inteira que contém o index.html.
+3. Chave: token do GitHub com permissão de escrita em Amplify-Eventos/jogos. A chave fica só naquele navegador.
+4. Publicar.
+5. A tela diz: Subiu. Em um minuto, atualiza a pagina.</pre>
+    <button id="copiar" type="button">Copiar para a IA</button>
+    <p id="aviso"></p>
+  </main>
+  <script>
+    document.getElementById("copiar").addEventListener("click", function () {
+      var texto = document.getElementById("ordem").innerText;
+      var aviso = document.getElementById("aviso");
+      navigator.clipboard.writeText(texto).then(function () {
+        aviso.textContent = "Copiado.";
+      }).catch(function () {
+        aviso.textContent = "Seleciona o texto e copia.";
+      });
+    });
+  </script>
+</body>
+</html>
