@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1a100c" />
+  <title>Enviar jogo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #1a100c;
+      color: #f3e6d4;
+      font: 18px/1.4 Georgia, "Times New Roman", serif;
+    }
+    main { max-width: 28rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    a { color: #e7c27a; }
+    h1 { font-weight: normal; font-size: 2rem; margin: 0.35rem 0 0.6rem; }
+    p { margin: 0 0 1rem; color: #b5a394; font-size: 1rem; }
+    label { display: block; margin: 1rem 0 0.35rem; font: 14px/1 system-ui, sans-serif; color: #c9a36a; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #6a4a32;
+      background: #2a1c16;
+      color: #f3e6d4;
+      font: 16px/1.3 system-ui, sans-serif;
+    }
+    input[type="file"] { width: 100%; font: 14px system-ui, sans-serif; }
+    button {
+      margin-top: 1.2rem;
+      width: 100%;
+      padding: 0.85rem;
+      border: 0;
+      border-radius: 8px;
+      background: #e7c27a;
+      color: #1a100c;
+      font: 16px/1 system-ui, sans-serif;
+    }
+    button:disabled { opacity: 0.5; }
+    #estado { margin-top: 1rem; color: #f3e6d4; }
+  </style>
+</head>
+<body>
+  <main>
+    <p><a href="../">Jogos</a></p>
+    <h1>Enviar jogo</h1>
+    <p>Escolhe a pasta que tem o index.html. Se o nome já existe, o jogo é trocado. A chave fica só neste navegador.</p>
+    <form id="form">
+      <label for="nome">Nome do jogo</label>
+      <input id="nome" type="text" required placeholder="Hemp Kush" />
+      <label for="pasta">Pasta do jogo</label>
+      <input id="pasta" type="file" webkitdirectory directory multiple required />
+      <label for="chave">Chave do desenvolvedor</label>
+      <input id="chave" type="password" required autocomplete="off" />
+      <button id="enviar" type="submit">Publicar</button>
+    </form>
+    <p id="estado"></p>
+  </main>
+  <script>
+    var REPO = "Amplify-Eventos/jogos";
+    var chaveEl = document.getElementById("chave");
+    var guardada = sessionStorage.getItem("jogos-chave") || "";
+    if (guardada) chaveEl.value = guardada;
+
+    function slugify(nome) {
+      return nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48);
+    }
+
+    function b64(buf) {
+      var bytes = new Uint8Array(buf);
+      var bin = "";
+      for (var i = 0; i < bytes.length; i += 8192) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+      }
+      return btoa(bin);
+    }
+
+    function estado(texto) {
+      document.getElementById("estado").textContent = texto;
+    }
+
+    async function gh(token, path, body, method) {
+      var res = await fetch("https://api.github.com" + path, {
+        method: method || (body ? "POST" : "GET"),
+        headers: {
+          Authorization: "Bearer " + token,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json"
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+      var data = {};
+      try { data = await res.json(); } catch (e) { data = {}; }
+      if (!res.ok) throw new Error(data.message || ("erro " + res.status));
+      return data;
+    }
+
+    document.getElementById("form").addEventListener("submit", async function (event) {
+      event.preventDefault();
+      var botao = document.getElementById("enviar");
+      var nome = document.getElementById("nome").value.trim();
+      var slug = slugify(nome);
+      var token = chaveEl.value.trim();
+      var files = Array.from(document.getElementById("pasta").files || []);
+      if (!slug || slug === "enviar") {
+        estado("Esse nome não serve.");
+        return;
+      }
+      var entradas = files.map(function (file) {
+        var rel = file.webkitRelativePath || file.name;
+        var partes = rel.split("/");
+        partes.shift();
+        return { file: file, path: partes.join("/") };
+      }).filter(function (item) { return item.path && item.path.indexOf("..") < 0; });
+      if (!entradas.some(function (item) { return item.path === "index.html"; })) {
+        estado("A pasta precisa ter um index.html.");
+        return;
+      }
+      botao.disabled = true;
+      sessionStorage.setItem("jogos-chave", token);
+      try {
+        estado("Lendo a página.");
+        var ref = await gh(token, "/repos/" + REPO + "/git/ref/heads/main");
+        var commitSha = ref.object.sha;
+        var commit = await gh(token, "/repos/" + REPO + "/git/commits/" + commitSha);
+        var arvore = await gh(token, "/repos/" + REPO + "/git/trees/" + commit.tree.sha + "?recursive=1");
+        if (arvore.truncated) throw new Error("A página está grande demais para trocar de uma vez.");
+        var prefixo = slug + "/";
+        var manter = (arvore.tree || []).filter(function (item) {
+          return item.type === "blob" && item.path !== "jogos.json" && item.path.indexOf(prefixo) !== 0;
+        }).map(function (item) {
+          return { path: item.path, mode: item.mode, type: "blob", sha: item.sha };
+        });
+
+        var capa = "";
+        var novos = [];
+        for (var i = 0; i < entradas.length; i++) {
+          estado("Enviando " + (i + 1) + " de " + entradas.length);
+          var buf = await entradas[i].file.arrayBuffer();
+          var blob = await gh(token, "/repos/" + REPO + "/git/blobs", {
+            content: b64(buf),
+            encoding: "base64"
+          });
+          var caminho = prefixo + entradas[i].path;
+          novos.push({ path: caminho, mode: "100644", type: "blob", sha: blob.sha });
+          if (!capa && /art\/loja-recebe\.(jpg|jpeg|png|webp)$/i.test(entradas[i].path)) capa = caminho;
+          if (!capa && /\.(jpg|jpeg|png|webp)$/i.test(entradas[i].path)) capa = caminho;
+        }
+
+        var lista = [];
+        try {
+          var atual = await fetch("../jogos.json").then(function (res) { return res.json(); });
+          if (Array.isArray(atual)) lista = atual.filter(function (jogo) { return jogo.slug !== slug; });
+        } catch (e) { lista = []; }
+        lista.push({ nome: nome, slug: slug, capa: capa || (prefixo + "index.html") });
+        var jsonBlob = await gh(token, "/repos/" + REPO + "/git/blobs", {
+          content: b64(new TextEncoder().encode(JSON.stringify(lista, null, 2) + "\n")),
+          encoding: "base64"
+        });
+        var tree = await gh(token, "/repos/" + REPO + "/git/trees", {
+          tree: manter.concat(novos).concat([{ path: "jogos.json", mode: "100644", type: "blob", sha: jsonBlob.sha }])
+        });
+        var novo = await gh(token, "/repos/" + REPO + "/git/commits", {
+          message: "Publica " + nome,
+          tree: tree.sha,
+          parents: [commitSha]
+        });
+        await gh(token, "/repos/" + REPO + "/git/refs/heads/main", { sha: novo.sha }, "PATCH");
+        estado("Subiu. Em um minuto, atualiza a pagina.");
+      } catch (err) {
+        estado(err.message || "Não publicou.");
+      }
+      botao.disabled = false;
+    });
+  </script>
+</body>
+</html>

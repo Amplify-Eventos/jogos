@@ -59,20 +59,59 @@
       color: #b5a394;
       font-size: 1rem;
     }
+    .dev {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #b5a394;
+      font: 14px/1 system-ui, sans-serif;
+    }
+    #lista { display: grid; gap: 1rem; }
   </style>
 </head>
 <body>
   <main>
     <p class="mark">Amplify</p>
     <h1>Jogos</h1>
-    <a class="game" href="hemp-kush/">
-      <img src="hemp-kush/art/loja-recebe.jpg" alt="" />
-      <div class="meta">
-        <strong>Hemp Kush</strong>
-        <span>Jogar</span>
-      </div>
-    </a>
-    <p class="soon">Os outros entram aqui.</p>
+    <div id="lista">
+      <a class="game" href="hemp-kush/">
+        <img src="hemp-kush/art/loja-recebe.jpg" alt="" />
+        <div class="meta">
+          <strong>Hemp Kush</strong>
+          <span>Jogar</span>
+        </div>
+      </a>
+    </div>
+    <p class="soon" id="vazio" hidden>Os outros entram aqui.</p>
+    <a class="dev" href="enviar/">Enviar jogo</a>
   </main>
+  <script>
+    fetch("jogos.json")
+      .then(function (res) { return res.json(); })
+      .then(function (lista) {
+        if (!lista || !lista.length) return;
+        var host = document.getElementById("lista");
+        host.textContent = "";
+        lista.forEach(function (jogo) {
+          var a = document.createElement("a");
+          a.className = "game";
+          a.href = jogo.slug + "/";
+          var img = document.createElement("img");
+          img.alt = "";
+          img.src = jogo.capa;
+          var meta = document.createElement("div");
+          meta.className = "meta";
+          var nome = document.createElement("strong");
+          nome.textContent = jogo.nome;
+          var jogar = document.createElement("span");
+          jogar.textContent = "Jogar";
+          meta.appendChild(nome);
+          meta.appendChild(jogar);
+          a.appendChild(img);
+          a.appendChild(meta);
+          host.appendChild(a);
+        });
+      })
+      .catch(function () {});
+  </script>
 </body>
 </html>
