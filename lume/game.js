@@ -13,6 +13,13 @@
     partida: 180
   };
 
+  var FASES = [
+    { id: "vigilia", nome: "Vigília", tipo: "tempo", limite: 180, texto: "Aguente três minutos até o farol reacender.", icone: "art/faroleiro.png" },
+    { id: "travessia", nome: "Travessia", tipo: "chegar", limite: 75, texto: "Acenda os três marcos do cais.", icone: "art/coroa.png", marcos: [{ x: 1090, y: 1170 }, { x: 500, y: 1100 }, { x: 520, y: 560 }] },
+    { id: "caca", nome: "Caça", tipo: "abater", limite: 110, meta: 100, texto: "Apague cem da maré.", icone: "art/caranguejo.png" },
+    { id: "vaga", nome: "Vaga-mãe", tipo: "chefe", limite: 150, texto: "Derrube a vaga-mãe.", icone: "art/vaga.png" }
+  ];
+
   var MOLDE = {
     caranguejo: { hp: 18, vel: 60, dano: 11, raio: 18, xp: 1, desenho: 58 },
     gaivota: { hp: 12, vel: 114, dano: 8, raio: 15, xp: 1, desenho: 54 },
@@ -73,6 +80,15 @@
     ]},
     brasa: { nome: "Brasa", max: 99, icone: "art/brasa.png", textos: [
       "Recupera uma parte da vida."
+    ]},
+    labareda: { nome: "Labareda", max: 1, icone: "art/fagulha.png", textos: [
+      "A fagulha evolui: mais larga, mais forte, atravessa a maré."
+    ]},
+    aureola: { nome: "Auréola", max: 1, icone: "art/coroa.png", textos: [
+      "A coroa evolui numa auréola larga."
+    ]},
+    clarao: { nome: "Clarão", max: 1, icone: "art/coroa.png", textos: [
+      "O pulso evolui num clarão curto e enorme."
     ]}
   };
 
@@ -109,7 +125,7 @@
       ranks: { fagulha: 1, coroa: 0, pulso: 0, ima: 0, passo: 0, vidro: 0, pavio: 0, bruma: 0 },
       jogador: {
         x: 800, y: 860, hp: 100, hpMax: 100, raio: 16, ang: -Math.PI / 2,
-        feridoAte: 0, flash: 0, marSom: 0
+        vx: 0, vy: 0, feridoAte: 0, flash: 0, marSom: 0
       },
       inimigos: [],
       tiros: [],
@@ -123,7 +139,18 @@
       pulsoVis: 0,
       pulsoRaio: 0,
       vaga: false,
+      chefeMorta: false,
       abates: 0,
+      modo: "tempo",
+      limite: 180,
+      meta: 0,
+      nomeFase: "Vigília",
+      faseId: "vigilia",
+      marco: null,
+      marcos: [],
+      marcoI: 0,
+      farol: 0,
+      evo: { labareda: false, aureola: false, clarao: false },
       shake: 0,
       aviso: "",
       avisoAte: 0,
@@ -133,10 +160,36 @@
     };
   }
 
-  function iniciar(seed) {
+  function iniciar(seed, qual, farol) {
     var s = criar(seed || 1);
+    var i, item;
+    s.farol = farol || 0;
+    if (qual) {
+      for (i = 0; i < FASES.length; i++) {
+        if (FASES[i].id === qual) item = FASES[i];
+      }
+    }
+    if (item) {
+      s.modo = item.tipo;
+      s.limite = item.limite;
+      s.meta = item.meta || 0;
+      s.nomeFase = item.nome;
+      s.faseId = item.id;
+      if (item.tipo === "chegar" && item.marcos) {
+        s.marcos = item.marcos.map(function (m) { return { x: m.x, y: m.y }; });
+        s.marcoI = 0;
+        s.marco = s.marcos[0];
+      }
+    }
     s.fase = "jogando";
     return s;
+  }
+
+  function ganhou(s) {
+    if (s.modo === "chegar") return !s.marco && s.marcoI > 0;
+    if (s.modo === "abater") return s.abates >= s.meta;
+    if (s.modo === "chefe") return !!s.chefeMorta;
+    return s.t >= (s.limite || CONFIG.partida);
   }
 
   function derivar(s) {
@@ -144,18 +197,41 @@
     var f = r.fagulha;
     var c = r.coroa;
     var u = r.pulso;
+    var bonus = 1 + (s.farol || 0) * 0.05;
+    var lab = s.evo && s.evo.labareda;
+    var aura = s.evo && s.evo.aureola;
+    var clar = s.evo && s.evo.clarao;
+    var nf = f >= 4 ? 3 : f >= 2 ? 2 : 1;
+    var nm = [0, 2, 3, 4, 4, 6][c];
+    var rm = [0, 74, 84, 96, 108, 122][c];
+    var dm = [0, 9, 12, 15, 19, 24][c];
+    var pc = [0, 3.2, 2.6, 2.15, 1.75, 1.4][u];
+    var dp = [0, 22, 30, 40, 50, 62][u];
+    var rp = [0, 110, 128, 148, 168, 192][u];
+    if (lab) nf += 1;
+    if (aura) {
+      nm += 2;
+      rm += 36;
+      dm += 10;
+    }
+    if (clar) {
+      pc *= 0.7;
+      dp *= 1.45;
+      rp *= 1.4;
+    }
     return {
-      fagulhas: f >= 4 ? 3 : f >= 2 ? 2 : 1,
-      dmgFagulha: f >= 5 ? 24 : f >= 3 ? 18 : 13,
-      cadencia: f >= 5 ? 0.46 : 0.6,
-      motes: [0, 2, 3, 4, 4, 6][c],
-      dmgMote: [0, 9, 12, 15, 19, 24][c],
-      raioMote: [0, 74, 84, 96, 108, 122][c],
-      pulsoCada: [0, 3.2, 2.6, 2.15, 1.75, 1.4][u],
-      dmgPulso: [0, 22, 30, 40, 50, 62][u],
-      raioPulso: [0, 110, 128, 148, 168, 192][u],
+      fagulhas: nf,
+      dmgFagulha: (f >= 5 ? 24 : f >= 3 ? 18 : 13) * (lab ? 1.5 : 1) * bonus,
+      cadencia: (f >= 5 ? 0.46 : 0.6) * (lab ? 0.85 : 1),
+      motes: nm,
+      dmgMote: dm * bonus,
+      raioMote: rm,
+      pulsoCada: pc,
+      dmgPulso: dp * bonus,
+      raioPulso: rp,
+      labareda: !!lab,
       velocidade: [158, 182, 208, 236, 268][r.passo],
-      hpMax: [100, 130, 165, 200, 240][r.vidro],
+      hpMax: [100, 130, 165, 200, 240][r.vidro] + (s.farol || 0) * 12,
       ima: [80, 125, 175, 240, 320][r.ima],
       frio: [1, 0.86, 0.74, 0.64, 0.55][r.pavio],
       pele: [1, 0.86, 0.74, 0.64, 0.55][r.bruma]
@@ -192,12 +268,18 @@
   function oferecer(s) {
     var ids = ["fagulha", "coroa", "pulso", "ima", "passo", "vidro", "pavio", "bruma"];
     var pool = [];
+    var evos = [];
     var i;
+    var cartas = [];
     for (i = 0; i < ids.length; i++) {
       if (s.ranks[ids[i]] < CARTAS[ids[i]].max) pool.push(ids[i]);
     }
+    if (s.ranks.fagulha >= 5 && !s.evo.labareda) evos.push("labareda");
+    if (s.ranks.coroa >= 5 && !s.evo.aureola) evos.push("aureola");
+    if (s.ranks.pulso >= 5 && !s.evo.clarao) evos.push("clarao");
     embaralhar(s, pool);
-    var cartas = [];
+    embaralhar(s, evos);
+    if (evos.length) cartas.push(cartaDe(s, evos[0]));
     for (i = 0; i < pool.length && cartas.length < 3; i++) cartas.push(cartaDe(s, pool[i]));
     while (cartas.length < 3) cartas.push(cartaDe(s, "brasa"));
     return cartas;
@@ -207,6 +289,10 @@
     var st, antes;
     if (id === "brasa") {
       s.jogador.hp = Math.min(s.jogador.hpMax, s.jogador.hp + 26);
+      return;
+    }
+    if (id === "labareda" || id === "aureola" || id === "clarao") {
+      s.evo[id] = true;
       return;
     }
     if (!CARTAS[id] || s.ranks[id] >= CARTAS[id].max) return;
@@ -284,6 +370,11 @@
       pocoEm: 1.2,
       ang: 0
     };
+    if (tipo === "vaga" && s.modo === "chefe") {
+      e.hp = 520;
+      e.hpMax = 520;
+      e.vel = 60;
+    }
     s.inimigos.push(e);
   }
 
@@ -312,6 +403,7 @@
     if (s.brasas.length >= 90) s.brasas.shift();
     s.brasas.push({ x: e.x, y: e.y, v: e.xp, raio: 8 });
     s.abates += 1;
+    if (e.tipo === "vaga") s.chefeMorta = true;
   }
 
   function empurraTorre(ent) {
@@ -374,10 +466,19 @@
     vel = st.velocidade * (noPoco ? 0.52 : 1);
     d = dist(p.x, p.y, CONFIG.centro, CONFIG.centro);
     if (d > CONFIG.raioCais) vel *= 0.4;
-    p.x += (eixo.x || 0) * vel * dt;
-    p.y += (eixo.y || 0) * vel * dt;
-    if ((eixo.x || eixo.y) && (Math.abs(eixo.x) + Math.abs(eixo.y) > 0.05)) {
-      p.ang = Math.atan2(eixo.y || 0, eixo.x || 0);
+    var segue = 1 - Math.exp(-dt * 8);
+    var alvoX = (eixo.x || 0) * vel;
+    var alvoY = (eixo.y || 0) * vel;
+    p.vx = (p.vx || 0) + (alvoX - (p.vx || 0)) * segue;
+    p.vy = (p.vy || 0) + (alvoY - (p.vy || 0)) * segue;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (Math.sqrt(p.vx * p.vx + p.vy * p.vy) > 24) {
+      var angAlvo = Math.atan2(p.vy, p.vx);
+      var giroAng = angAlvo - p.ang;
+      while (giroAng > Math.PI) giroAng -= Math.PI * 2;
+      while (giroAng < -Math.PI) giroAng += Math.PI * 2;
+      p.ang += giroAng * Math.min(1, dt * 10);
     }
     dx = p.x - CONFIG.centro;
     dy = p.y - CONFIG.centro;
@@ -400,7 +501,7 @@
       s.nasce = intervalo(s.t);
       nascer(s, tipoDo(s), false);
     }
-    if (!s.vaga && s.t >= 150) {
+    if (!s.vaga && s.t >= (s.modo === "chefe" ? 10 : 150) && s.modo !== "chegar" && s.modo !== "abater") {
       s.vaga = true;
       nascer(s, "vaga", true);
       s.aviso = "A vaga-mãe subiu";
@@ -455,8 +556,9 @@
               vx: Math.cos(a) * 390,
               vy: Math.sin(a) * 390,
               dano: st.dmgFagulha,
-              vida: 0.7,
-              raio: 8,
+              vida: st.labareda ? 0.85 : 0.7,
+              raio: st.labareda ? 13 : 8,
+              largo: !!st.labareda,
               ja: {}
             });
           }
@@ -555,15 +657,29 @@
       }
     }
 
+    if (s.modo === "chegar" && s.marco) {
+      if (dist(p.x, p.y, s.marco.x, s.marco.y) < 52) s.noMarco = (s.noMarco || 0) + dt;
+      else s.noMarco = Math.max(0, (s.noMarco || 0) - dt * 0.5);
+      if (s.noMarco >= 3) {
+        s.marcoI += 1;
+        s.marco = s.marcos[s.marcoI] || null;
+        s.noMarco = 0;
+      }
+    }
     if (p.hp <= 0) {
       p.hp = 0;
       s.fase = "derrota";
       s.eventos = ["derrota"];
       return s;
     }
-    if (s.t >= CONFIG.partida) {
+    if (ganhou(s)) {
       s.fase = "vitoria";
       s.eventos = ["vitoria"];
+      return s;
+    }
+    if (s.modo !== "tempo" && s.limite && s.t >= s.limite) {
+      s.fase = "derrota";
+      s.eventos = ["derrota"];
       return s;
     }
     if (s.xp >= s.need) {
@@ -575,6 +691,7 @@
 
   return {
     CONFIG: CONFIG,
+    FASES: FASES,
     criar: criar,
     iniciar: iniciar,
     passo: passo,
@@ -594,6 +711,10 @@ function pagina(api) {
   var fimStats = document.getElementById("fim-stats");
   var acender = document.getElementById("acender");
   var deNovo = document.getElementById("de-novo");
+  var aoMapa = document.getElementById("ao-mapa");
+  var mapa = document.getElementById("mapa");
+  var fasesEl = document.getElementById("fases");
+  var farolEl = document.getElementById("farol-nivel");
   var estado = null;
   var ultimo = 0;
   var oculto = false;
@@ -613,7 +734,9 @@ function pagina(api) {
     fagulha: "art/fagulha.png",
     coroa: "art/coroa.png",
     poco: "art/poco.png",
-    cais: "art/cais.jpg"
+    cais: "art/cais.jpg",
+    marco: "art/marco.png",
+    mapa: "art/mapa.jpg"
   };
 
   function criarAudio() {
@@ -733,14 +856,81 @@ function pagina(api) {
     return { x: x, y: y };
   }
 
-  function comecar(seed) {
+  function progresso() {
+    try {
+      var j = JSON.parse(localStorage.getItem("lume-ilha") || "{\"feitas\":[]}");
+      if (!j.feitas) j.feitas = [];
+      return j;
+    } catch (e) {
+      return { feitas: [] };
+    }
+  }
+
+  function gravarFase(id) {
+    var j = progresso();
+    if (j.feitas.indexOf(id) === -1) j.feitas.push(id);
+    try { localStorage.setItem("lume-ilha", JSON.stringify(j)); } catch (e2) {}
+  }
+
+  function faseAberta(id) {
+    var feitas = progresso().feitas;
+    var i;
+    for (i = 0; i < api.FASES.length; i++) {
+      if (api.FASES[i].id === id) break;
+    }
+    if (i <= 0) return true;
+    return feitas.indexOf(api.FASES[i - 1].id) !== -1;
+  }
+
+  function montarMapa() {
+    var feitas = progresso().feitas;
+    farolEl.textContent = "Farol " + feitas.length;
+    fasesEl.innerHTML = "";
+    api.FASES.forEach(function (item) {
+      var b = document.createElement("button");
+      var img = document.createElement("img");
+      var texto = document.createElement("div");
+      var nome = document.createElement("strong");
+      var linha = document.createElement("span");
+      var aberta = faseAberta(item.id);
+      b.type = "button";
+      b.className = "fase";
+      b.disabled = !aberta;
+      img.src = item.icone;
+      img.alt = "";
+      nome.textContent = item.nome + (feitas.indexOf(item.id) !== -1 ? " · feita" : "");
+      linha.textContent = aberta ? item.texto : "Fecha a fase anterior.";
+      texto.appendChild(nome);
+      texto.appendChild(linha);
+      b.appendChild(img);
+      b.appendChild(texto);
+      b.addEventListener("click", function () {
+        if (!faseAberta(item.id)) return;
+        comecar(null, item.id);
+      });
+      fasesEl.appendChild(b);
+    });
+  }
+
+  function mostrarMapa() {
+    montarMapa();
+    titulo.hidden = true;
+    fim.hidden = true;
+    cartas.hidden = true;
+    mapa.hidden = false;
+    estado = null;
+    somFim = false;
+  }
+
+  function comecar(seed, qual) {
     audio.desbloquear();
     audio.parar();
     audio.tocar("ambiente");
-    estado = api.iniciar(seed || ((Math.random() * 1e9) | 0));
+    estado = api.iniciar(seed || ((Math.random() * 1e9) | 0), qual || "vigilia", progresso().feitas.length);
     ofertaVista = null;
     somFim = false;
     titulo.hidden = true;
+    mapa.hidden = true;
     fim.hidden = true;
     cartas.hidden = true;
   }
@@ -794,9 +984,12 @@ function pagina(api) {
     if (acabou && !somFim) {
       somFim = true;
       audio.parar();
-      fimTitulo.textContent = estado.fase === "vitoria" ? "O farol reacendeu" : "A lanterna apagou";
+      fimTitulo.textContent = estado.fase === "vitoria"
+        ? (estado.modo === "tempo" ? "O farol reacendeu" : estado.nomeFase + " fechou")
+        : "A lanterna apagou";
       fimTexto.textContent = estado.fase === "vitoria" ? "A maré recuou." : "A maré cobriu o cais.";
-      fimStats.textContent = "Tempo " + relogio(estado.t) + " · nível " + estado.nivel + " · maré " + estado.abates;
+      fimStats.textContent = (estado.nomeFase || "Vigília") + " · tempo " + relogio(estado.t) + " · nível " + estado.nivel + " · maré " + estado.abates;
+      if (estado.fase === "vitoria" && estado.faseId) gravarFase(estado.faseId);
     }
     if (!acabou) somFim = false;
     if (estado.fase === "carta" && estado.oferta && estado.oferta !== ofertaVista) {
@@ -805,11 +998,12 @@ function pagina(api) {
     }
   }
 
-  function sprite(img, x, y, w, ang, alfa) {
+  function sprite(img, x, y, w, ang, alfa, escX, escY) {
     if (!img || !img.complete || !img.naturalWidth) return;
     ctx.save();
     ctx.translate(x, y);
     if (ang) ctx.rotate(ang + Math.PI / 2);
+    ctx.scale(escX || 1, escY || 1);
     ctx.globalAlpha = alfa == null ? 1 : alfa;
     ctx.drawImage(img, -w / 2, -w / 2, w, w);
     ctx.restore();
@@ -832,31 +1026,42 @@ function pagina(api) {
     }
     ctx.setTransform(escala, 0, 0, escala, canvas.width / 2 - (p.x + ox) * escala, canvas.height / 2 - (p.y + oy) * escala);
     if (imgs.cais) ctx.drawImage(imgs.cais, 0, 0, api.CONFIG.mundo, api.CONFIG.mundo);
-    luz = ctx.createRadialGradient(p.x, p.y, 16, p.x, p.y, 170);
-    luz.addColorStop(0, "rgba(240, 170, 60, 0.2)");
+    var raioLuz = 158 + Math.sin(estado.t * 3) * 16;
+    luz = ctx.createRadialGradient(p.x, p.y, 16, p.x, p.y, raioLuz);
+    luz.addColorStop(0, "rgba(240, 170, 60, 0.22)");
     luz.addColorStop(1, "rgba(240, 170, 60, 0)");
     ctx.fillStyle = luz;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 170, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, raioLuz, 0, Math.PI * 2);
     ctx.fill();
+    if (estado.marco && estado.modo === "chegar") {
+      var pulsa = 30 + Math.sin(estado.t * 5) * 4;
+      sprite(imgs.marco || imgs.coroa, estado.marco.x, estado.marco.y + Math.sin(estado.t * 3) * 2, pulsa, estado.t * 0.6, 1);
+    }
     for (i = 0; i < estado.pocos.length; i++) {
       g = estado.pocos[i];
       sprite(imgs.poco, g.x, g.y, g.desenho, 0, 0.92);
     }
     for (i = 0; i < estado.brasas.length; i++) {
       g = estado.brasas[i];
-      sprite(imgs.brasa, g.x, g.y, 22, 0, 1);
+      sprite(imgs.brasa, g.x, g.y + Math.sin(estado.t * 6 + i) * 3, 22, estado.t, 1);
     }
     for (i = 0; i < estado.tiros.length; i++) {
       g = estado.tiros[i];
-      sprite(imgs.fagulha, g.x, g.y, 22, Math.atan2(g.vy, g.vx), 1);
+      sprite(imgs.fagulha, g.x, g.y, g.largo ? 36 : 22, Math.atan2(g.vy, g.vx), 1);
     }
     for (i = 0; i < estado.inimigos.length; i++) {
       e = estado.inimigos[i];
-      sprite(imgs[e.tipo], e.x, e.y, e.desenho, e.tipo === "vaga" ? 0 : e.ang, e.flash > 0 ? 0.55 : 1);
+      var escY = 1;
+      var angE = e.tipo === "vaga" ? estado.t * 0.35 : e.ang;
+      if (e.tipo === "gaivota") escY = 1 + Math.sin(estado.t * 16 + e.id) * 0.16;
+      if (e.tipo === "caranguejo") angE += Math.sin(estado.t * 11 + e.id) * 0.18;
+      if (e.tipo === "onda") angE += Math.sin(estado.t * 2 + e.id) * 0.25;
+      sprite(imgs[e.tipo], e.x, e.y + Math.sin(estado.t * 7 + e.id) * 2, e.desenho, angE, e.flash > 0 ? 0.55 : 1, 1, escY);
     }
     for (i = 0; i < estado.motes.length; i++) {
-      sprite(imgs.coroa, estado.motes[i].x, estado.motes[i].y, 22, estado.giro, 1);
+      var tm = 20 + Math.sin(estado.t * 8 + i) * 3;
+      sprite(imgs.coroa, estado.motes[i].x, estado.motes[i].y, tm, estado.giro, 1);
     }
     if (estado.pulsoVis > 0) {
       var anel = estado.pulsoRaio * (1.05 - estado.pulsoVis);
@@ -866,25 +1071,36 @@ function pagina(api) {
         sprite(imgs.coroa, p.x + Math.cos(aa) * anel, p.y + Math.sin(aa) * anel, 18, 0, Math.max(0, q));
       }
     }
-    sprite(imgs.faroleiro, p.x, p.y, 64, p.ang, p.flash > 0 ? 0.6 : 1);
+    var anda = Math.sqrt((p.vx || 0) * (p.vx || 0) + (p.vy || 0) * (p.vy || 0));
+    var bob = Math.sin(estado.t * (7 + anda * 0.03)) * (anda > 28 ? 3.2 : 0.8);
+    var escX = 1 + Math.min(0.1, anda / 2400);
+    var escYp = 1 - Math.min(0.07, anda / 3200);
+    sprite(imgs.faroleiro, p.x, p.y + bob, 64, p.ang, p.flash > 0 ? 0.6 : 1, escX, escYp);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (estado.fase === "jogando" || estado.fase === "carta") {
       var topo = Math.round(canvas.height * 0.06);
       ctx.fillStyle = "#f4ead8";
       ctx.font = Math.round(canvas.width * 0.052) + "px Palatino, Georgia, serif";
       ctx.textAlign = "center";
-      falta = Math.max(0, api.CONFIG.partida - estado.t);
+      falta = Math.max(0, (estado.limite || api.CONFIG.partida) - estado.t);
       ctx.fillText(relogio(falta), canvas.width / 2, topo);
       barra = Math.min(canvas.width * 0.42, 240);
-      var barraY = topo + Math.round(canvas.width * 0.03);
+      var barraY = topo + Math.round(canvas.width * 0.045);
       vida = estado.jogador.hpMax ? estado.jogador.hp / estado.jogador.hpMax : 0;
       ctx.fillStyle = "rgba(244, 234, 216, 0.25)";
       ctx.fillRect((canvas.width - barra) / 2, barraY, barra, 5);
       ctx.fillStyle = "#e0a23a";
       ctx.fillRect((canvas.width - barra) / 2, barraY, barra * Math.max(0, vida), 5);
       ctx.fillStyle = "#d5cbb8";
-      ctx.font = Math.round(canvas.width * 0.03) + "px system-ui, sans-serif";
-      ctx.fillText("nível " + estado.nivel + "  ·  maré " + estado.abates, canvas.width / 2, barraY + Math.round(canvas.width * 0.055));
+      ctx.font = Math.round(canvas.width * 0.028) + "px system-ui, sans-serif";
+      var objetivo = "maré " + estado.abates;
+      if (estado.modo === "abater") objetivo = "maré " + estado.abates + "/" + estado.meta;
+      if (estado.modo === "chefe") objetivo = estado.chefeMorta ? "a vaga caiu" : "a vaga sobe";
+      if (estado.modo === "chegar" && estado.marco) {
+        var dm = Math.hypot(estado.marco.x - p.x, estado.marco.y - p.y);
+        objetivo = "marco " + ((estado.marcoI || 0) + 1) + "/" + estado.marcos.length + " · " + Math.max(0, Math.round(dm));
+      }
+      ctx.fillText((estado.nomeFase || "Vigília") + "  ·  nível " + estado.nivel + "  ·  " + objetivo, canvas.width / 2, barraY + Math.round(canvas.width * 0.07));
     }
     if (estado.aviso && estado.t < estado.avisoAte && estado.fase === "jogando") {
       ctx.fillStyle = "#f0d7a4";
@@ -940,8 +1156,15 @@ function pagina(api) {
   });
   window.addEventListener("keyup", function (e) { teclas[e.key.toLowerCase()] = false; });
 
-  acender.addEventListener("click", function () { if (!acender.disabled) comecar(); });
-  deNovo.addEventListener("click", function () { comecar(); });
+  acender.addEventListener("click", function () {
+    if (acender.disabled) return;
+    audio.desbloquear();
+    mostrarMapa();
+  });
+  deNovo.addEventListener("click", function () {
+    comecar(null, estado && estado.faseId);
+  });
+  aoMapa.addEventListener("click", function () { mostrarMapa(); });
 
   var nomes = Object.keys(arquivos);
   Promise.all(nomes.map(function (nome) {
