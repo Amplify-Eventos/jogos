@@ -15,7 +15,7 @@
 
   var FASES = [
     { id: "vigilia", nome: "Vigília", tipo: "tempo", limite: 180, texto: "Aguente três minutos até o farol reacender.", icone: "art/faroleiro.png" },
-    { id: "travessia", nome: "Travessia", tipo: "chegar", limite: 75, texto: "Acenda os três marcos do cais.", icone: "art/coroa.png", marcos: [{ x: 1090, y: 1170 }, { x: 500, y: 1100 }, { x: 520, y: 560 }] },
+    { id: "travessia", nome: "Travessia", tipo: "chegar", limite: 75, texto: "Acenda os três marcos do cais.", icone: "art/marco.png", marcos: [{ x: 1090, y: 1170 }, { x: 500, y: 1100 }, { x: 520, y: 560 }] },
     { id: "caca", nome: "Caça", tipo: "abater", limite: 110, meta: 100, texto: "Apague cem da maré.", icone: "art/caranguejo.png" },
     { id: "vaga", nome: "Vaga-mãe", tipo: "chefe", limite: 150, texto: "Derrube a vaga-mãe.", icone: "art/vaga.png" }
   ];
@@ -149,6 +149,10 @@
       marco: null,
       marcos: [],
       marcoI: 0,
+      pressao: 1,
+      chefeHp: 0,
+      ondaChefe: 120,
+      pontos: 0,
       farol: 0,
       evo: { labareda: false, aureola: false, clarao: false },
       shake: 0,
@@ -160,21 +164,63 @@
     };
   }
 
-  function iniciar(seed, qual, farol) {
-    var s = criar(seed || 1);
-    var i, item;
-    s.farol = farol || 0;
-    if (qual) {
-      for (i = 0; i < FASES.length; i++) {
-        if (FASES[i].id === qual) item = FASES[i];
+  var MARCO_A = { x: 1090, y: 1170 };
+  var MARCO_B = { x: 500, y: 1100 };
+  var MARCO_C = { x: 520, y: 560 };
+  var MARCO_D = { x: 1120, y: 700 };
+
+  var HISTORIA = [
+    { id: "h1", nome: "Primeira luz", tipo: "tempo", limite: 75, pressao: 0.72, texto: "Aguente até o farol piscar.", icone: "art/faroleiro.png" },
+    { id: "h2", nome: "Dois marcos", tipo: "chegar", limite: 70, pressao: 0.78, texto: "Acenda os dois marcos.", icone: "art/marco.png", marcos: [MARCO_A, MARCO_B] },
+    { id: "h3", nome: "Maré curta", tipo: "tempo", limite: 120, pressao: 0.84, texto: "A noite aperta um pouco.", icone: "art/faroleiro.png" },
+    { id: "h4", nome: "Caça rasa", tipo: "abater", limite: 80, meta: 40, pressao: 0.84, texto: "Apague quarenta da maré.", icone: "art/caranguejo.png" },
+    { id: "h5", nome: "Três marcos", tipo: "chegar", limite: 90, pressao: 0.9, texto: "Acenda os três marcos.", icone: "art/marco.png", marcos: [MARCO_A, MARCO_B, MARCO_C] },
+    { id: "h6", nome: "Caça funda", tipo: "abater", limite: 110, meta: 80, pressao: 0.94, texto: "Apague oitenta da maré.", icone: "art/caranguejo.png" },
+    { id: "h7", nome: "Vigília longa", tipo: "tempo", limite: 180, pressao: 1, texto: "Aguente três minutos.", icone: "art/faroleiro.png" },
+    { id: "h8", nome: "A vaga", tipo: "chefe", limite: 150, pressao: 1, chefeHp: 520, texto: "Derrube a vaga-mãe.", icone: "art/vaga.png" }
+  ];
+
+  var MODOS = [
+    { id: "vigilia-1", grupo: "vigilia", nome: "Vigília I", tipo: "tempo", limite: 90, pressao: 0.78, texto: "Um minuto e meio.", icone: "art/faroleiro.png" },
+    { id: "vigilia-2", grupo: "vigilia", nome: "Vigília II", tipo: "tempo", limite: 150, pressao: 0.9, texto: "Dois minutos e meio.", icone: "art/faroleiro.png" },
+    { id: "vigilia-3", grupo: "vigilia", nome: "Vigília III", tipo: "tempo", limite: 180, pressao: 1, texto: "Três minutos.", icone: "art/faroleiro.png" },
+    { id: "travessia-1", grupo: "travessia", nome: "Travessia I", tipo: "chegar", limite: 70, pressao: 0.8, texto: "Dois marcos.", icone: "art/marco.png", marcos: [MARCO_A, MARCO_B] },
+    { id: "travessia-2", grupo: "travessia", nome: "Travessia II", tipo: "chegar", limite: 85, pressao: 0.92, texto: "Três marcos.", icone: "art/marco.png", marcos: [MARCO_A, MARCO_B, MARCO_C] },
+    { id: "travessia-3", grupo: "travessia", nome: "Travessia III", tipo: "chegar", limite: 100, pressao: 1, texto: "Quatro marcos.", icone: "art/marco.png", marcos: [MARCO_A, MARCO_B, MARCO_C, MARCO_D] },
+    { id: "caca-1", grupo: "caca", nome: "Caça I", tipo: "abater", limite: 80, meta: 40, pressao: 0.82, texto: "Quarenta da maré.", icone: "art/caranguejo.png" },
+    { id: "caca-2", grupo: "caca", nome: "Caça II", tipo: "abater", limite: 100, meta: 70, pressao: 0.92, texto: "Setenta da maré.", icone: "art/caranguejo.png" },
+    { id: "caca-3", grupo: "caca", nome: "Caça III", tipo: "abater", limite: 120, meta: 110, pressao: 1, texto: "Cento e dez da maré.", icone: "art/caranguejo.png" },
+    { id: "vaga-1", grupo: "vaga", nome: "Vaga I", tipo: "chefe", limite: 140, pressao: 0.85, chefeHp: 340, texto: "Uma vaga menor.", icone: "art/vaga.png" },
+    { id: "vaga-2", grupo: "vaga", nome: "Vaga II", tipo: "chefe", limite: 150, pressao: 1, chefeHp: 520, texto: "A vaga-mãe.", icone: "art/vaga.png" },
+    { id: "vaga-3", grupo: "vaga", nome: "Vaga III", tipo: "chefe", limite: 170, pressao: 1.05, chefeHp: 760, texto: "A vaga mais funda.", icone: "art/vaga.png" }
+  ];
+
+  var INFINITO = { id: "infinito", nome: "Infinito", tipo: "infinito", limite: 0, pressao: 1, texto: "A maré não acaba.", icone: "art/onda.png" };
+
+  function acharFase(qual) {
+    var listas = [FASES, HISTORIA, MODOS, [INFINITO]];
+    var a, i;
+    if (!qual) return null;
+    for (a = 0; a < listas.length; a++) {
+      for (i = 0; i < listas[a].length; i++) {
+        if (listas[a][i].id === qual) return listas[a][i];
       }
     }
+    return null;
+  }
+
+  function iniciar(seed, qual, farol) {
+    var s = criar(seed || 1);
+    var item = acharFase(qual);
+    s.farol = farol || 0;
     if (item) {
       s.modo = item.tipo;
       s.limite = item.limite;
       s.meta = item.meta || 0;
       s.nomeFase = item.nome;
       s.faseId = item.id;
+      s.pressao = item.pressao || 1;
+      s.chefeHp = item.chefeHp || 0;
       if (item.tipo === "chegar" && item.marcos) {
         s.marcos = item.marcos.map(function (m) { return { x: m.x, y: m.y }; });
         s.marcoI = 0;
@@ -186,6 +232,7 @@
   }
 
   function ganhou(s) {
+    if (s.modo === "infinito") return false;
     if (s.modo === "chegar") return !s.marco && s.marcoI > 0;
     if (s.modo === "abater") return s.abates >= s.meta;
     if (s.modo === "chefe") return !!s.chefeMorta;
@@ -350,7 +397,7 @@
     var ang, escala, e;
     if (!forcar && s.inimigos.length >= 66) return;
     ang = s.rng() * Math.PI * 2;
-    escala = 1 + s.t / 100;
+    escala = (1 + s.t / 100) * (s.pressao || 1);
     e = {
       id: s.seq++,
       tipo: tipo,
@@ -371,14 +418,21 @@
       ang: 0
     };
     if (tipo === "vaga" && s.modo === "chefe") {
-      e.hp = 520;
-      e.hpMax = 520;
+      e.hp = s.chefeHp || 520;
+      e.hpMax = e.hp;
       e.vel = 60;
     }
     if (tipo === "vaga" && s.modo === "tempo") {
       e.vel = 40;
       e.dano = 11;
       e.raio = 40;
+    }
+    if (tipo === "vaga" && s.modo === "infinito") {
+      e.hp = Math.round(260 + s.t * 3.2);
+      e.hpMax = e.hp;
+      e.vel = 36;
+      e.dano = 10;
+      e.raio = 42;
     }
     s.inimigos.push(e);
   }
@@ -408,7 +462,14 @@
     if (s.brasas.length >= 90) s.brasas.shift();
     s.brasas.push({ x: e.x, y: e.y, v: e.xp, raio: 8 });
     s.abates += 1;
-    if (e.tipo === "vaga") s.chefeMorta = true;
+    if (e.tipo === "vaga") {
+      s.chefeMorta = true;
+      if (s.modo === "infinito") {
+        s.chefeMorta = false;
+        s.vaga = false;
+        s.ondaChefe = s.t + 80;
+      }
+    }
   }
 
   function empurraTorre(ent) {
@@ -501,12 +562,21 @@
       }
     }
 
+    if (s.modo === "infinito") s.pressao = 1 + s.t / 110;
     s.nasce -= dt;
     if (s.nasce <= 0) {
-      s.nasce = intervalo(s.t);
+      var aperto = Math.max(0.5, Math.min(s.pressao || 1, 2.4));
+      s.nasce = intervalo(s.t) / aperto;
       nascer(s, tipoDo(s), false);
     }
-    if (!s.vaga && s.t >= (s.modo === "chefe" ? 10 : 150) && s.modo !== "chegar" && s.modo !== "abater") {
+    if (s.modo === "infinito") {
+      if (!s.vaga && s.t >= (s.ondaChefe || 120)) {
+        s.vaga = true;
+        nascer(s, "vaga", true);
+        s.aviso = "A vaga sobe de novo";
+        s.avisoAte = s.t + 2.4;
+      }
+    } else if (!s.vaga && s.t >= (s.modo === "chefe" ? 10 : 150) && s.modo !== "chegar" && s.modo !== "abater") {
       s.vaga = true;
       nascer(s, "vaga", true);
       s.aviso = "A vaga-mãe subiu";
@@ -671,6 +741,7 @@
         s.noMarco = 0;
       }
     }
+    s.pontos = Math.floor(s.t) * 10 + s.abates * 5 + s.nivel * 8;
     if (p.hp <= 0) {
       p.hp = 0;
       s.fase = "derrota";
@@ -682,7 +753,7 @@
       s.eventos = ["vitoria"];
       return s;
     }
-    if (s.modo !== "tempo" && s.limite && s.t >= s.limite) {
+    if (s.modo !== "tempo" && s.modo !== "infinito" && s.limite && s.t >= s.limite) {
       s.fase = "derrota";
       s.eventos = ["derrota"];
       return s;
@@ -697,6 +768,8 @@
   return {
     CONFIG: CONFIG,
     FASES: FASES,
+    HISTORIA: HISTORIA,
+    MODOS: MODOS,
     criar: criar,
     iniciar: iniciar,
     passo: passo,
@@ -720,6 +793,8 @@ function pagina(api) {
   var mapa = document.getElementById("mapa");
   var fasesEl = document.getElementById("fases");
   var farolEl = document.getElementById("farol-nivel");
+  var mapaTitulo = document.getElementById("mapa-titulo");
+  var voltar = document.getElementById("voltar");
   var estado = null;
   var ultimo = 0;
   var oculto = false;
@@ -727,6 +802,8 @@ function pagina(api) {
   var teclas = {};
   var ofertaVista = null;
   var somFim = false;
+  var vista = "portas";
+  var grupoAberto = "vigilia";
   var imgs = {};
   var audio = criarAudio();
   var arquivos = {
@@ -865,60 +942,221 @@ function pagina(api) {
     try {
       var j = JSON.parse(localStorage.getItem("lume-ilha") || "{\"feitas\":[]}");
       if (!j.feitas) j.feitas = [];
+      if (!j.melhores) j.melhores = {};
+      if (!j.quadro) j.quadro = [];
       return j;
     } catch (e) {
-      return { feitas: [] };
+      return { feitas: [], melhores: {}, quadro: [] };
     }
+  }
+
+  function salvar(j) {
+    try { localStorage.setItem("lume-ilha", JSON.stringify(j)); } catch (e2) {}
   }
 
   function gravarFase(id) {
     var j = progresso();
     if (j.feitas.indexOf(id) === -1) j.feitas.push(id);
-    try { localStorage.setItem("lume-ilha", JSON.stringify(j)); } catch (e2) {}
+    salvar(j);
   }
 
-  function faseAberta(id) {
+  function farolAtual() {
+    var feitas = progresso().feitas;
+    var n = 0;
+    api.HISTORIA.forEach(function (item) {
+      if (feitas.indexOf(item.id) !== -1) n += 1;
+    });
+    return n;
+  }
+
+  function abertaNaLista(lista, id) {
     var feitas = progresso().feitas;
     var i;
-    for (i = 0; i < api.FASES.length; i++) {
-      if (api.FASES[i].id === id) break;
+    for (i = 0; i < lista.length; i++) {
+      if (lista[i].id === id) break;
     }
     if (i <= 0) return true;
-    return feitas.indexOf(api.FASES[i - 1].id) !== -1;
+    return feitas.indexOf(lista[i - 1].id) !== -1;
   }
 
-  function montarMapa() {
-    var feitas = progresso().feitas;
-    farolEl.textContent = "Farol " + feitas.length;
-    fasesEl.innerHTML = "";
-    api.FASES.forEach(function (item) {
-      var b = document.createElement("button");
-      var img = document.createElement("img");
-      var texto = document.createElement("div");
-      var nome = document.createElement("strong");
-      var linha = document.createElement("span");
-      var aberta = faseAberta(item.id);
-      b.type = "button";
-      b.className = "fase";
-      b.disabled = !aberta;
-      img.src = item.icone;
-      img.alt = "";
-      nome.textContent = item.nome + (feitas.indexOf(item.id) !== -1 ? " · feita" : "");
-      linha.textContent = aberta ? item.texto : "Fecha a fase anterior.";
-      texto.appendChild(nome);
-      texto.appendChild(linha);
-      b.appendChild(img);
-      b.appendChild(texto);
-      b.addEventListener("click", function () {
-        if (!faseAberta(item.id)) return;
-        comecar(null, item.id);
+  function gravarRecorde(s) {
+    var j = progresso();
+    var pts = s.pontos || 0;
+    var ant = j.melhores[s.faseId];
+    var melhor = !ant || pts > ant.pontos;
+    if (melhor) {
+      j.melhores[s.faseId] = {
+        pontos: pts,
+        t: Math.round(s.t * 10) / 10,
+        abates: s.abates,
+        nome: s.nomeFase
+      };
+    }
+    if (s.fase === "vitoria" || (s.modo === "infinito" && s.t >= 20)) {
+      j.quadro.push({
+        nome: s.nomeFase,
+        pontos: pts,
+        t: Math.round(s.t * 10) / 10
       });
-      fasesEl.appendChild(b);
+      j.quadro.sort(function (a, b) { return b.pontos - a.pontos; });
+      j.quadro = j.quadro.slice(0, 8);
+    }
+    salvar(j);
+    return melhor;
+  }
+
+  function linhaRecorde(id, texto) {
+    var melhor = progresso().melhores[id];
+    if (!melhor) return texto;
+    return texto + " · recorde " + melhor.pontos;
+  }
+
+  function botaoLista(item, aberta, trava) {
+    var b = document.createElement("button");
+    var img = document.createElement("img");
+    var texto = document.createElement("div");
+    var nome = document.createElement("strong");
+    var linha = document.createElement("span");
+    var feitas = progresso().feitas;
+    b.type = "button";
+    b.className = "fase";
+    b.disabled = !aberta;
+    img.src = item.icone;
+    img.alt = "";
+    nome.textContent = item.nome + (feitas.indexOf(item.id) !== -1 ? " · feita" : "");
+    linha.textContent = aberta ? linhaRecorde(item.id, item.texto) : trava;
+    texto.appendChild(nome);
+    texto.appendChild(linha);
+    b.appendChild(img);
+    b.appendChild(texto);
+    b.addEventListener("click", function () {
+      if (!aberta) return;
+      comecar(null, item.id);
+    });
+    fasesEl.appendChild(b);
+  }
+
+  function botaoPorta(nome, texto, icone, aoClicar) {
+    var b = document.createElement("button");
+    var img = document.createElement("img");
+    var caixa = document.createElement("div");
+    var forte = document.createElement("strong");
+    var linha = document.createElement("span");
+    b.type = "button";
+    b.className = "fase";
+    img.src = icone;
+    img.alt = "";
+    forte.textContent = nome;
+    linha.textContent = texto;
+    caixa.appendChild(forte);
+    caixa.appendChild(linha);
+    b.appendChild(img);
+    b.appendChild(caixa);
+    b.addEventListener("click", aoClicar);
+    fasesEl.appendChild(b);
+  }
+
+  function pintarMenu() {
+    var feitas = progresso().feitas;
+    var melhorInf = progresso().melhores.infinito;
+    fasesEl.innerHTML = "";
+    voltar.hidden = vista === "portas";
+    farolEl.textContent = "Farol " + farolAtual();
+    if (vista === "portas") {
+      mapaTitulo.textContent = "A ilha";
+      botaoPorta("História", "Oito noites, uma depois da outra.", "art/faroleiro.png", function () {
+        vista = "historia";
+        pintarMenu();
+      });
+      botaoPorta("Modos", "Quatro estilos, três níveis cada.", "art/marco.png", function () {
+        vista = "modos";
+        pintarMenu();
+      });
+      botaoPorta("Infinito", melhorInf ? "Recorde " + melhorInf.pontos + " · " + relogio(melhorInf.t) : "A maré não acaba.", "art/onda.png", function () {
+        comecar(null, "infinito");
+      });
+      botaoPorta("Ranque", "O seu recorde e o quadro deste aparelho.", "art/coroa.png", function () {
+        vista = "ranque";
+        pintarMenu();
+      });
+      return;
+    }
+    if (vista === "historia") {
+      mapaTitulo.textContent = "História";
+      api.HISTORIA.forEach(function (item) {
+        botaoLista(item, abertaNaLista(api.HISTORIA, item.id), "Fecha a noite anterior.");
+      });
+      return;
+    }
+    if (vista === "modos") {
+      mapaTitulo.textContent = "Modos";
+      [
+        { id: "vigilia", nome: "Vigília", texto: "Aguentar o farol.", icone: "art/faroleiro.png" },
+        { id: "travessia", nome: "Travessia", texto: "Acender os marcos.", icone: "art/marco.png" },
+        { id: "caca", nome: "Caça", texto: "Apagar a maré.", icone: "art/caranguejo.png" },
+        { id: "vaga", nome: "Vaga-mãe", texto: "Derrubar a vaga.", icone: "art/vaga.png" }
+      ].forEach(function (g) {
+        var n = 0;
+        api.MODOS.forEach(function (item) {
+          if (item.grupo === g.id && feitas.indexOf(item.id) !== -1) n += 1;
+        });
+        botaoPorta(g.nome, g.texto + (n ? " · " + n + "/3" : ""), g.icone, function () {
+          grupoAberto = g.id;
+          vista = "niveis";
+          pintarMenu();
+        });
+      });
+      return;
+    }
+    if (vista === "niveis") {
+      var lista = api.MODOS.filter(function (item) { return item.grupo === grupoAberto; });
+      mapaTitulo.textContent = lista.length ? lista[0].nome.replace(/ I+$/, "") : "Níveis";
+      lista.forEach(function (item) {
+        botaoLista(item, abertaNaLista(lista, item.id), "Fecha o nível anterior.");
+      });
+      return;
+    }
+    mapaTitulo.textContent = "Ranque";
+    var pessoais = Object.keys(progresso().melhores);
+    var quadro = progresso().quadro;
+    var tituloP = document.createElement("p");
+    tituloP.className = "marca";
+    tituloP.textContent = "Pessoal";
+    fasesEl.appendChild(tituloP);
+    if (!pessoais.length) {
+      var vazio = document.createElement("p");
+      vazio.className = "recorde";
+      vazio.textContent = "Ainda não há recorde.";
+      fasesEl.appendChild(vazio);
+    }
+    pessoais.forEach(function (id) {
+      var m = progresso().melhores[id];
+      var p = document.createElement("p");
+      p.className = "recorde";
+      p.textContent = m.nome + " · " + m.pontos + " · " + relogio(m.t);
+      fasesEl.appendChild(p);
+    });
+    var tituloQ = document.createElement("p");
+    tituloQ.className = "marca";
+    tituloQ.textContent = "Quadro deste aparelho";
+    fasesEl.appendChild(tituloQ);
+    if (!quadro.length) {
+      var vazioQ = document.createElement("p");
+      vazioQ.className = "recorde";
+      vazioQ.textContent = "O quadro abre na primeira noite fechada.";
+      fasesEl.appendChild(vazioQ);
+    }
+    quadro.forEach(function (m, i) {
+      var p = document.createElement("p");
+      p.className = "recorde";
+      p.textContent = (i + 1) + ". " + m.nome + " · " + m.pontos;
+      fasesEl.appendChild(p);
     });
   }
 
   function mostrarMapa() {
-    montarMapa();
+    vista = "portas";
+    pintarMenu();
     titulo.hidden = true;
     fim.hidden = true;
     cartas.hidden = true;
@@ -931,7 +1169,7 @@ function pagina(api) {
     audio.desbloquear();
     audio.parar();
     audio.tocar("ambiente");
-    estado = api.iniciar(seed || ((Math.random() * 1e9) | 0), qual || "vigilia", progresso().feitas.length);
+    estado = api.iniciar(seed || ((Math.random() * 1e9) | 0), qual || "vigilia", farolAtual());
     ofertaVista = null;
     somFim = false;
     titulo.hidden = true;
@@ -993,8 +1231,12 @@ function pagina(api) {
         ? (estado.modo === "tempo" ? "O farol reacendeu" : estado.nomeFase + " fechou")
         : "A lanterna apagou";
       fimTexto.textContent = estado.fase === "vitoria" ? "A maré recuou." : "A maré cobriu o cais.";
-      fimStats.textContent = (estado.nomeFase || "Vigília") + " · tempo " + relogio(estado.t) + " · nível " + estado.nivel + " · maré " + estado.abates;
-      if (estado.fase === "vitoria" && estado.faseId) gravarFase(estado.faseId);
+      var recorde = false;
+      if (estado.faseId && (estado.fase === "vitoria" || estado.modo === "infinito")) {
+        if (estado.fase === "vitoria") gravarFase(estado.faseId);
+        recorde = gravarRecorde(estado);
+      }
+      fimStats.textContent = (estado.nomeFase || "Vigília") + " · tempo " + relogio(estado.t) + " · nível " + estado.nivel + " · maré " + estado.abates + " · " + (estado.pontos || 0) + (recorde ? " · recorde" : "");
     }
     if (!acabou) somFim = false;
     if (estado.fase === "carta" && estado.oferta && estado.oferta !== ofertaVista) {
@@ -1040,8 +1282,15 @@ function pagina(api) {
     ctx.arc(p.x, p.y, raioLuz, 0, Math.PI * 2);
     ctx.fill();
     if (estado.marco && estado.modo === "chegar") {
-      var pulsa = 30 + Math.sin(estado.t * 5) * 4;
-      sprite(imgs.marco || imgs.coroa, estado.marco.x, estado.marco.y + Math.sin(estado.t * 3) * 2, pulsa, estado.t * 0.6, 1);
+      var imgM = imgs.marco || imgs.coroa;
+      var largM = 84;
+      var altM = imgM && imgM.naturalWidth ? largM * imgM.naturalHeight / imgM.naturalWidth : 120;
+      var bobM = Math.sin(estado.t * 3) * 2;
+      ctx.save();
+      ctx.translate(estado.marco.x, estado.marco.y + bobM);
+      ctx.globalAlpha = 1;
+      if (imgM && imgM.complete && imgM.naturalWidth) ctx.drawImage(imgM, -largM / 2, -altM, largM, altM);
+      ctx.restore();
     }
     for (i = 0; i < estado.pocos.length; i++) {
       g = estado.pocos[i];
@@ -1088,7 +1337,8 @@ function pagina(api) {
       ctx.font = Math.round(canvas.width * 0.052) + "px Palatino, Georgia, serif";
       ctx.textAlign = "center";
       falta = Math.max(0, (estado.limite || api.CONFIG.partida) - estado.t);
-      ctx.fillText(relogio(falta), canvas.width / 2, topo);
+      if (estado.modo === "infinito") ctx.fillText(relogio(estado.t), canvas.width / 2, topo);
+      else ctx.fillText(relogio(falta), canvas.width / 2, topo);
       barra = Math.min(canvas.width * 0.42, 240);
       var barraY = topo + Math.round(canvas.width * 0.045);
       vida = estado.jogador.hpMax ? estado.jogador.hp / estado.jogador.hpMax : 0;
@@ -1098,7 +1348,7 @@ function pagina(api) {
       ctx.fillRect((canvas.width - barra) / 2, barraY, barra * Math.max(0, vida), 5);
       ctx.fillStyle = "#d5cbb8";
       ctx.font = Math.round(canvas.width * 0.028) + "px system-ui, sans-serif";
-      var objetivo = "maré " + estado.abates;
+      var objetivo = estado.modo === "infinito" ? (estado.pontos || 0) + " pts" : "maré " + estado.abates;
       if (estado.modo === "abater") objetivo = "maré " + estado.abates + "/" + estado.meta;
       if (estado.modo === "chefe") objetivo = estado.chefeMorta ? "a vaga caiu" : "a vaga sobe";
       if (estado.modo === "chegar" && estado.marco) {
@@ -1170,6 +1420,10 @@ function pagina(api) {
     comecar(null, estado && estado.faseId);
   });
   aoMapa.addEventListener("click", function () { mostrarMapa(); });
+  voltar.addEventListener("click", function () {
+    vista = vista === "niveis" ? "modos" : "portas";
+    pintarMenu();
+  });
 
   var nomes = Object.keys(arquivos);
   Promise.all(nomes.map(function (nome) {

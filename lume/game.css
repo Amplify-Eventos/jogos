@@ -108,7 +108,22 @@ h2 { font-size: 2rem; }
   background: rgba(4, 12, 18, 0.94);
 }
 
-#mapa h2 { font-size: 1.55rem; margin-bottom: 0.15rem; }
+#voltar {
+  width: auto;
+  min-height: 36px;
+  margin: 0 0 0.35rem;
+  padding: 0.2rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+.recorde {
+  margin: 0;
+  padding: 0.35rem 0.2rem;
+  border-bottom: 1px solid rgba(224, 162, 58, 0.25);
+  font-size: 0.92rem;
+}
+
+.recorde strong { font-weight: normal; }
 
 #farol-nivel {
   margin: 0 0 0.55rem;
