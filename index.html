@@ -3,116 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#1a100c" />
+  <meta name="theme-color" content="#070b10" />
   <title>Amplify Jogos</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
-    body {
-      background: #1a100c;
-      color: #f3e6d4;
-      font: 18px/1.4 Georgia, "Times New Roman", serif;
-    }
-    main {
-      max-width: 28rem;
-      margin: 0 auto;
-      padding: 2.5rem 1.25rem 3rem;
-    }
-    p { margin: 0; }
-    .mark {
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      font: 12px/1 system-ui, sans-serif;
-      color: #c9a36a;
-    }
-    h1 {
-      margin: 0.4rem 0 1.5rem;
-      font-weight: normal;
-      font-size: 2.4rem;
-    }
-    a.game {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      background: #2a1c16;
-      border: 1px solid #6a4a32;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    a.game img {
-      display: block;
-      width: 100%;
-      height: 11rem;
-      object-fit: cover;
-      object-position: center 30%;
-    }
-    .meta { padding: 0.9rem 1rem 1.1rem; }
-    .meta strong { display: block; font-size: 1.35rem; font-weight: normal; }
-    .meta span {
-      display: inline-block;
-      margin-top: 0.35rem;
-      font: 14px/1 system-ui, sans-serif;
-      color: #e7c27a;
-    }
-    .soon {
-      margin-top: 1.25rem;
-      color: #b5a394;
-      font-size: 1rem;
-    }
-    .dev {
-      display: inline-block;
-      margin: 2rem 1.25rem 0 0;
-      color: #b5a394;
-      font: 14px/1 system-ui, sans-serif;
-    }
-    #lista { display: grid; gap: 1rem; }
-  </style>
+  <link rel="stylesheet" href="loja.css" />
 </head>
 <body>
-  <main>
-    <p class="mark">Amplify</p>
-    <h1>Jogos</h1>
+  <header class="bar">
+    <a class="logo" href="./">AMPLIFY <b>JOGOS</b></a>
+    <nav>
+      <a class="on" href="./">Loja</a>
+      <a href="enviar/">Enviar</a>
+      <a href="como/">Publicar</a>
+    </nav>
+  </header>
+  <main class="wrap">
+    <section class="hero" id="hero" style="background-image:url('hemp-kush/art/loja-recebe.jpg')">
+      <div class="veil"></div>
+      <div class="copy">
+        <p class="kicker">Em destaque</p>
+        <h1 id="hero-nome">Hemp Kush</h1>
+        <p class="lede">Joga no navegador. Sem instalar.</p>
+        <a class="play" id="hero-play" href="hemp-kush/">Jogar agora</a>
+      </div>
+    </section>
+    <h2 class="sec">Na loja</h2>
     <div id="lista">
       <a class="game" href="hemp-kush/">
         <img src="hemp-kush/art/loja-recebe.jpg" alt="" />
-        <div class="meta">
-          <strong>Hemp Kush</strong>
-          <span>Jogar</span>
-        </div>
+        <div class="meta"><strong>Hemp Kush</strong><span>Jogar</span></div>
+      </a>
+      <a class="game" href="lume/">
+        <img src="lume/art/capa.jpg" alt="" />
+        <div class="meta"><strong>Lume</strong><span>Jogar</span></div>
       </a>
     </div>
-    <p class="soon" id="vazio" hidden>Os outros entram aqui.</p>
-    <a class="dev" href="enviar/">Enviar jogo</a>
-    <a class="dev" href="como/">Como publicar</a>
+    <p class="soon" id="vazio" hidden>A loja ainda está vazia.</p>
   </main>
   <script>
+    function capaQuebrada(img) {
+      img.addEventListener("error", function () { img.remove(); });
+    }
+    function card(jogo) {
+      var a = document.createElement("a");
+      a.className = "game";
+      a.href = jogo.slug + "/";
+      if (jogo.capa) {
+        var img = document.createElement("img");
+        img.alt = "";
+        img.src = jogo.capa;
+        capaQuebrada(img);
+        a.appendChild(img);
+      }
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      var nome = document.createElement("strong");
+      nome.textContent = jogo.nome;
+      var jogar = document.createElement("span");
+      jogar.textContent = "Jogar";
+      meta.appendChild(nome);
+      meta.appendChild(jogar);
+      a.appendChild(meta);
+      return a;
+    }
     fetch("jogos.json")
       .then(function (res) { return res.json(); })
       .then(function (lista) {
-        if (!lista || !lista.length) return;
+        if (!lista || !lista.length) {
+          document.getElementById("vazio").hidden = false;
+          return;
+        }
+        var destaque = lista[0];
+        var hero = document.getElementById("hero");
+        if (destaque.capa) hero.style.backgroundImage = "url('" + destaque.capa + "')";
+        document.getElementById("hero-nome").textContent = destaque.nome;
+        document.getElementById("hero-play").href = destaque.slug + "/";
         var host = document.getElementById("lista");
         host.textContent = "";
-        lista.forEach(function (jogo) {
-          var a = document.createElement("a");
-          a.className = "game";
-          a.href = jogo.slug + "/";
-          var img = document.createElement("img");
-          img.alt = "";
-          img.src = jogo.capa;
-          var meta = document.createElement("div");
-          meta.className = "meta";
-          var nome = document.createElement("strong");
-          nome.textContent = jogo.nome;
-          var jogar = document.createElement("span");
-          jogar.textContent = "Jogar";
-          meta.appendChild(nome);
-          meta.appendChild(jogar);
-          a.appendChild(img);
-          a.appendChild(meta);
-          host.appendChild(a);
-        });
+        lista.forEach(function (jogo) { host.appendChild(card(jogo)); });
       })
       .catch(function () {});
+    document.querySelectorAll("a.game img").forEach(capaQuebrada);
   </script>
 </body>
 </html>

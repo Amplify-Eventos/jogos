@@ -1,0 +1,218 @@
+:root {
+  --bg: #070b10;
+  --text: #e7f0fb;
+  --muted: #8ea3bb;
+  --line: rgba(150, 198, 255, 0.16);
+  --cyan: #7ad7ff;
+  --panel: rgba(16, 24, 34, 0.78);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  color: var(--text);
+  font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+  background:
+    radial-gradient(900px 420px at 100% -10%, rgba(36, 112, 196, 0.35), transparent 60%),
+    radial-gradient(700px 380px at -10% 10%, rgba(88, 48, 180, 0.28), transparent 55%),
+    var(--bg);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 15%, transparent 72%);
+}
+a { color: var(--cyan); }
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1.4rem;
+  background: rgba(7, 11, 16, 0.82);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.logo {
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  font-weight: 700;
+}
+.logo b { color: var(--cyan); font-weight: 600; letter-spacing: 0.16em; }
+nav { display: flex; gap: 0.25rem; }
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+}
+nav a.on, nav a:hover {
+  color: #fff;
+  background: rgba(122, 215, 255, 0.12);
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 1.4rem 1.2rem 4rem; position: relative; }
+.wrap.narrow { max-width: 40rem; }
+.wrap.narrow > h1 { font-size: 2.4rem; }
+.hero {
+  position: relative;
+  min-height: 24rem;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #101820 center/cover no-repeat;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+.hero .veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, rgba(5, 8, 14, 0.94) 0%, rgba(5, 8, 14, 0.62) 46%, rgba(5, 8, 14, 0.12) 100%);
+}
+.hero .copy {
+  position: relative;
+  z-index: 1;
+  min-height: 24rem;
+  max-width: 32rem;
+  padding: 2.2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.kicker, h2.sec {
+  margin: 0;
+  color: var(--cyan);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+}
+.hero h1, .wrap > h1 {
+  margin: 0.35rem 0 0.45rem;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-weight: 650;
+}
+.lede { margin: 0; max-width: 28rem; color: var(--muted); }
+.play, button.play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.1rem;
+  padding: 0.8rem 1.25rem;
+  width: fit-content;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #8ae4ff, #1a9fff);
+  color: #041018;
+  font: 700 15px/1 "Segoe UI", system-ui, sans-serif;
+  text-decoration: none;
+  box-shadow: 0 0 28px rgba(40, 170, 255, 0.35);
+  cursor: pointer;
+}
+button.play { width: 100%; }
+button.play:disabled { opacity: 0.5; cursor: default; }
+h2.sec { margin: 2rem 0 0.85rem; color: var(--muted); }
+#lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+a.game {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: #fff;
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, #1a3c58, #0c121a 62%);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+a.game:hover {
+  transform: translateY(-4px);
+  border-color: rgba(122, 215, 255, 0.75);
+  box-shadow: 0 16px 40px rgba(16, 110, 190, 0.28);
+}
+a.game img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+a.game .meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2rem 0.9rem 0.75rem;
+  background: linear-gradient(transparent, rgba(4, 8, 14, 0.94));
+}
+a.game strong { display: block; font-size: 1.05rem; }
+a.game span {
+  color: var(--cyan);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.soon { color: var(--muted); }
+.panel {
+  margin-top: 0.4rem;
+  padding: 1.1rem 1.1rem 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+}
+label {
+  display: block;
+  margin: 0.9rem 0 0.35rem;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 0.75rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #0c141c;
+  color: var(--text);
+  font: 16px/1.3 "Segoe UI", system-ui, sans-serif;
+}
+input[type="file"] { width: 100%; color: var(--muted); }
+h2 { font-size: 1.05rem; font-weight: 650; margin: 1.5rem 0 0.35rem; }
+p, li { color: var(--muted); }
+ol { margin: 0.2rem 0 0; padding-left: 1.2rem; }
+pre {
+  margin: 0.8rem 0 0;
+  padding: 0.9rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: #0c141c;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font: 13px/1.45 ui-monospace, Consolas, monospace;
+}
+#estado, #aviso { color: var(--text); }
+@media (max-width: 640px) {
+  .bar { padding: 0.65rem 0.7rem; gap: 0.35rem; }
+  .logo { letter-spacing: 0.06em; font-size: 11px; }
+  .logo b { letter-spacing: 0.06em; }
+  nav a { padding: 0.35rem 0.45rem; font-size: 13px; }
+  .hero, .hero .copy { min-height: 20rem; }
+  .hero .copy { padding: 1.3rem; }
+}

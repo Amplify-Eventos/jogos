@@ -3,50 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#1a100c" />
+  <meta name="theme-color" content="#070b10" />
   <title>Enviar jogo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #1a100c;
-      color: #f3e6d4;
-      font: 18px/1.4 Georgia, "Times New Roman", serif;
-    }
-    main { max-width: 28rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
-    a { color: #e7c27a; }
-    h1 { font-weight: normal; font-size: 2rem; margin: 0.35rem 0 0.6rem; }
-    p { margin: 0 0 1rem; color: #b5a394; font-size: 1rem; }
-    label { display: block; margin: 1rem 0 0.35rem; font: 14px/1 system-ui, sans-serif; color: #c9a36a; }
-    input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 0.7rem 0.8rem;
-      border-radius: 8px;
-      border: 1px solid #6a4a32;
-      background: #2a1c16;
-      color: #f3e6d4;
-      font: 16px/1.3 system-ui, sans-serif;
-    }
-    input[type="file"] { width: 100%; font: 14px system-ui, sans-serif; }
-    button {
-      margin-top: 1.2rem;
-      width: 100%;
-      padding: 0.85rem;
-      border: 0;
-      border-radius: 8px;
-      background: #e7c27a;
-      color: #1a100c;
-      font: 16px/1 system-ui, sans-serif;
-    }
-    button:disabled { opacity: 0.5; }
-    #estado { margin-top: 1rem; color: #f3e6d4; }
-  </style>
+  <link rel="stylesheet" href="../loja.css" />
 </head>
 <body>
-  <main>
-    <p><a href="../">Jogos</a></p>
+  <header class="bar">
+    <a class="logo" href="../">AMPLIFY <b>JOGOS</b></a>
+    <nav>
+      <a href="../">Loja</a>
+      <a class="on" href="./">Enviar</a>
+      <a href="../como/">Publicar</a>
+    </nav>
+  </header>
+  <main class="wrap narrow">
+    <p class="kicker">Desenvolvedor</p>
     <h1>Enviar jogo</h1>
-    <p>Escolhe a pasta que tem o index.html. Se o nome já existe, o jogo é trocado. A chave fica só neste navegador. O passo a passo está em <a href="../como/">Como publicar</a>.</p>
+    <p class="lede">Escolhe a pasta que tem o index.html. Se o nome já existe, o jogo é trocado. A chave fica só neste navegador. O passo a passo está em <a href="../como/">Como publicar</a>.</p>
+    <div class="panel">
     <form id="form">
       <label for="nome">Nome do jogo</label>
       <input id="nome" type="text" required placeholder="Hemp Kush" />
@@ -54,8 +28,9 @@
       <input id="pasta" type="file" webkitdirectory directory multiple required />
       <label for="chave">Chave do desenvolvedor</label>
       <input id="chave" type="password" required autocomplete="off" />
-      <button id="enviar" type="submit">Publicar</button>
+      <button class="play" id="enviar" type="submit">Publicar</button>
     </form>
+    </div>
     <p id="estado"></p>
   </main>
   <script>
