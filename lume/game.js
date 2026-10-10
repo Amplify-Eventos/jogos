@@ -22,7 +22,7 @@
 
   var MOLDE = {
     caranguejo: { hp: 18, vel: 60, dano: 11, raio: 18, xp: 1, desenho: 58 },
-    gaivota: { hp: 12, vel: 114, dano: 8, raio: 15, xp: 1, desenho: 54 },
+    gaivota: { hp: 12, vel: 88, dano: 8, raio: 15, xp: 1, desenho: 54 },
     onda: { hp: 42, vel: 42, dano: 14, raio: 24, xp: 2, desenho: 76 },
     vaga: { hp: 1800, vel: 74, dano: 20, raio: 54, xp: 12, desenho: 176 }
   };
@@ -375,6 +375,11 @@
       e.hpMax = 520;
       e.vel = 60;
     }
+    if (tipo === "vaga" && s.modo === "tempo") {
+      e.vel = 40;
+      e.dano = 11;
+      e.raio = 40;
+    }
     s.inimigos.push(e);
   }
 
@@ -522,7 +527,7 @@
         }
         if (e.impulso > 0) {
           e.impulso -= dt;
-          vel *= 2.05;
+          vel *= 1.35;
         }
       }
       e.x += (dx / d) * vel * dt;
@@ -627,7 +632,7 @@
       }
       if (dist(p.x, p.y, e.x, e.y) < p.raio + e.raio && s.t >= p.feridoAte) {
         p.hp -= e.dano * st.pele;
-        p.feridoAte = s.t + 0.38;
+        p.feridoAte = s.t + 0.5;
         p.flash = 0.12;
         s.shake = 8;
         evento(s, "dano");
@@ -843,7 +848,7 @@ function pagina(api) {
       var dy = dedo.y - dedo.oy;
       var L = Math.sqrt(dx * dx + dy * dy);
       if (L > 10) {
-        var c = Math.min(L, 70) / 70;
+        var c = Math.min(L, 32) / 32;
         x = (dx / L) * c;
         y = (dy / L) * c;
       }
