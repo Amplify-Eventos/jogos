@@ -3,5 +3,10 @@
     "nome": "Hemp Kush",
     "slug": "hemp-kush",
     "capa": "hemp-kush/art/loja-recebe.jpg"
+  },
+  {
+    "nome": "Lume",
+    "slug": "lume",
+    "capa": "lume/art/capa.jpg"
   }
 ]

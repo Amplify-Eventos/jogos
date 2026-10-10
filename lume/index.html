@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#06141c">
+  <title>Lume</title>
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <canvas id="jogo" width="390" height="844"></canvas>
+
+  <section id="titulo">
+    <img src="art/capa.jpg" alt="">
+    <div class="painel">
+      <p class="marca">Amplify</p>
+      <h1>Lume</h1>
+      <p>A maré de vidro sobe. A lanterna atira sozinha. Arraste o dedo para andar e aguente três minutos.</p>
+      <button id="acender" type="button" disabled>Acendendo…</button>
+    </div>
+  </section>
+
+  <section id="cartas" hidden>
+    <p class="olho">A lanterna pede um reforço</p>
+    <div id="opcoes"></div>
+  </section>
+
+  <section id="fim" hidden>
+    <div class="caixa">
+      <h2 id="fim-titulo"></h2>
+      <p id="fim-texto"></p>
+      <p id="fim-stats"></p>
+      <button id="de-novo" type="button">De novo</button>
+    </div>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>
