@@ -999,7 +999,8 @@ body:has(.title-screen:not([hidden])) {
 }
 @keyframes ember {
   0% { filter: none; transform: scale(1); opacity: 1; }
-  100% { filter: none; transform: scale(0.7); opacity: 0; }
+  42% { filter: brightness(1.55); transform: scale(1.28); opacity: 1; }
+  100% { filter: brightness(1.8); transform: scale(0.15); opacity: 0; }
 }
 @keyframes drop {
   0% { transform: translate(calc(var(--slide, 0) * 100%), calc(var(--fall) * -100%)) scale(0.98, 1.04); }
