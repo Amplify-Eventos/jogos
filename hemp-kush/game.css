@@ -544,10 +544,11 @@ body:has(.title-screen:not([hidden])) {
   z-index: 3;
   animation: drop calc(0.18s + var(--fall) * 0.07s) cubic-bezier(.22, .7, .3, 1);
 }
-.tile.seed-out { animation: seed-out 0.42s ease forwards; }
-@keyframes seed-out {
-  0%, 20% { opacity: 1; }
-  100% { opacity: 0; }
+.tile.seed-out { animation: none; }
+.tile.seed-out img { animation: seed-sink 0.42s ease forwards; }
+@keyframes seed-sink {
+  0%, 16% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(70%) scale(0.5); }
 }
 .tile.bad { animation: shake 0.16s linear; }
 .tile.jelly::before { content: none; display: none; }
