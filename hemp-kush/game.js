@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.6",
+    notas: [
+      "O match junta as flores e estoura.",
+    ],
+  },
+  {
     nome: "1.5",
     notas: [
       "O pipe acende a cuia e a flor entra.",
@@ -3052,12 +3058,72 @@ function boot() {
         ).finished);
       });
     });
+    const loose = [];
     order.forEach((cell) => {
       if (smoked.has(cell.r + "," + cell.c)) return;
       const el = tileEl(cell);
       if (!el) return;
       el.classList.remove("antic");
-      el.classList.add("ember");
+      const quiet = stillFeel() || !el.animate
+        || el.classList.contains("vidro")
+        || el.classList.contains("jelly")
+        || el.classList.contains("cover-1")
+        || el.classList.contains("hash")
+        || cell.kind === "hash"
+        || cell.kind === "vidro";
+      if (quiet) {
+        el.classList.add("ember");
+        return;
+      }
+      loose.push({ cell: cell, el: el });
+    });
+    const seen = new Set();
+    loose.forEach((item) => {
+      const id = item.cell.r + "," + item.cell.c;
+      if (seen.has(id)) return;
+      const group = [];
+      const stack = [item];
+      seen.add(id);
+      while (stack.length) {
+        const cur = stack.pop();
+        group.push(cur);
+        loose.forEach((other) => {
+          const oid = other.cell.r + "," + other.cell.c;
+          if (seen.has(oid)) return;
+          const dr = Math.abs(other.cell.r - cur.cell.r);
+          const dc = Math.abs(other.cell.c - cur.cell.c);
+          if (dr + dc !== 1) return;
+          seen.add(oid);
+          stack.push(other);
+        });
+      }
+      if (group.length < 2) {
+        group[0].el.classList.add("ember");
+        return;
+      }
+      let cx = 0;
+      let cy = 0;
+      group.forEach((spot) => {
+        const box = spot.el.getBoundingClientRect();
+        cx += box.left + box.width / 2;
+        cy += box.top + box.height / 2;
+      });
+      cx /= group.length;
+      cy /= group.length;
+      group.forEach((spot) => {
+        smoked.add(spot.cell.r + "," + spot.cell.c);
+        const here = spot.el.getBoundingClientRect();
+        const dx = cx - (here.left + here.width / 2);
+        const dy = cy - (here.top + here.height / 2);
+        jobs.push(spot.el.animate(
+          [
+            { transform: "none", opacity: 1, filter: "none" },
+            { transform: "translate(" + (dx * 0.7) + "px," + (dy * 0.7) + "px) scale(1.16)", opacity: 1, filter: "brightness(1.45)", offset: 0.55 },
+            { transform: "translate(" + dx + "px," + dy + "px) scale(0.2)", opacity: 0, filter: "brightness(1.7)" },
+          ],
+          { duration: 420, easing: "cubic-bezier(.22,.7,.3,1)", fill: "forwards" }
+        ).finished);
+      });
     });
     if (stillFeel()) return;
     const waits = [];
