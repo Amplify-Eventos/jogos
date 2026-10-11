@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.5",
+    notas: [
+      "O pipe acende a cuia e a flor entra.",
+    ],
+  },
+  {
     nome: "1.4",
     notas: [
       "O bong puxa a mesa e sobe.",
@@ -2991,6 +2997,32 @@ function boot() {
       order.forEach((spot) => {
         if (smoked.has(spot.r + "," + spot.c)) return;
         mark(spot, "cherry", Math.max(Math.abs(spot.r - cell.r), Math.abs(spot.c - cell.c)));
+      });
+    });
+    order.forEach((cell) => {
+      if (cell.power !== "pipe") return;
+      const elPipe = tileEl(cell);
+      if (!elPipe) return;
+      const box = elPipe.getBoundingClientRect();
+      mark(cell, "cherry", 0);
+      order.forEach((spot) => {
+        const id = spot.r + "," + spot.c;
+        if (smoked.has(id) || spot.power) return;
+        const el = tileEl(spot);
+        smoked.add(id);
+        if (!el || stillFeel() || !el.animate) return;
+        el.classList.remove("antic");
+        const here = el.getBoundingClientRect();
+        const dx = (box.left + box.width / 2) - (here.left + here.width / 2);
+        const dy = (box.top + box.height / 2) - (here.top + here.height / 2);
+        jobs.push(el.animate(
+          [
+            { transform: "none", opacity: 1, filter: "none" },
+            { transform: "translate(" + (dx * 0.45) + "px," + (dy * 0.45) + "px) scale(0.72)", opacity: 1, filter: "sepia(0.8) saturate(2) brightness(1.4)", offset: 0.45 },
+            { transform: "translate(" + dx + "px," + dy + "px) scale(0.12)", opacity: 0, filter: "sepia(1) brightness(0.45)" },
+          ],
+          { duration: 380, delay: 150, easing: "cubic-bezier(.22,.7,.3,1)", fill: "forwards" }
+        ).finished);
       });
     });
     spawned.forEach((spawn) => {
