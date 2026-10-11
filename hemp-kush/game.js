@@ -1467,6 +1467,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.3",
+    notas: [
+      "O fino se bola com as peças e aparece enrolado.",
+      "O fino queima a fileira do começo ao fim.",
+      "A bomba acende a área como a ponta do beck.",
+    ],
+  },
+  {
     nome: "1.2",
     notas: [
       "O segundo corte leva a folha. A flor estoura.",
@@ -2845,7 +2853,7 @@ function boot() {
         boardEl.classList.add("shake");
         Snd.power();
       } else Snd.pop(wave.combo);
-      await ember(wave.cleared);
+      await ember(wave);
       if (wave.bong && typeof Feel !== "undefined" && Feel.rise) await Feel.rise(wave.bong);
       await sleep(40);
       const depois = wave.state;
@@ -2925,14 +2933,74 @@ function boot() {
     return list;
   }
 
-  async function ember(cells) {
+  async function ember(wave) {
+    const cells = Array.isArray(wave) ? wave : (wave.cleared || []);
+    const spawned = Array.isArray(wave) ? [] : (wave.spawned || []);
     const order = burnOrder(cells);
+    const smoked = new Set();
+    const jobs = [];
+    const mark = (cell, cls, lit) => {
+      const el = tileEl(cell);
+      if (!el) return;
+      el.classList.remove("antic");
+      el.style.setProperty("--lit", String(lit));
+      el.classList.add(cls);
+      smoked.add(cell.r + "," + cell.c);
+    };
     order.forEach((cell) => {
-      const el = boardEl.querySelector('[data-r="' + cell.r + '"][data-c="' + cell.c + '"]');
-      if (el) el.classList.add("ember");
+      if (cell.power !== "row" && cell.power !== "col") return;
+      const line = order.filter((other) => (cell.power === "row" ? other.r === cell.r : other.c === cell.c));
+      line.sort((a, b) => (cell.power === "row" ? a.c - b.c : a.r - b.r));
+      line.forEach((spot, i) => mark(spot, cell.power === "row" ? "roll" : "roll-col", i));
     });
-    if (stillFeel() || !order.length) return;
-    await sleep(520);
+    order.forEach((cell) => {
+      if (cell.power !== "wrap") return;
+      order.forEach((spot) => {
+        if (smoked.has(spot.r + "," + spot.c)) return;
+        mark(spot, "cherry", Math.max(Math.abs(spot.r - cell.r), Math.abs(spot.c - cell.c)));
+      });
+    });
+    spawned.forEach((spawn) => {
+      if (spawn.power !== "row" && spawn.power !== "col" && spawn.power !== "wrap" && spawn.power !== "pipe") return;
+      const elSpawn = tileEl(spawn);
+      if (!elSpawn) return;
+      const box = elSpawn.getBoundingClientRect();
+      order.forEach((cell) => {
+        const id = cell.r + "," + cell.c;
+        if (smoked.has(id) || cell.power) return;
+        const near = spawn.power === "row"
+          ? cell.r === spawn.r
+          : spawn.power === "col"
+            ? cell.c === spawn.c
+            : Math.max(Math.abs(cell.r - spawn.r), Math.abs(cell.c - spawn.c)) <= 2;
+        if (!near) return;
+        const el = tileEl(cell);
+        smoked.add(id);
+        if (!el || stillFeel() || !el.animate) return;
+        el.classList.remove("antic");
+        const here = el.getBoundingClientRect();
+        const dx = (box.left + box.width / 2) - (here.left + here.width / 2);
+        const dy = (box.top + box.height / 2) - (here.top + here.height / 2);
+        jobs.push(el.animate(
+          [{ transform: "none", opacity: 1 }, { transform: "translate(" + dx + "px," + dy + "px) scale(0.15)", opacity: 0 }],
+          { duration: 380, easing: "cubic-bezier(.22,.7,.3,1)", fill: "forwards" }
+        ).finished);
+      });
+    });
+    order.forEach((cell) => {
+      if (smoked.has(cell.r + "," + cell.c)) return;
+      const el = tileEl(cell);
+      if (!el) return;
+      el.classList.remove("antic");
+      el.classList.add("ember");
+    });
+    if (stillFeel()) return;
+    const waits = [];
+    if (order.some((cell) => cell.power === "row" || cell.power === "col")) waits.push(sleep(1240));
+    if (order.some((cell) => cell.power === "wrap")) waits.push(sleep(700));
+    if (jobs.length) waits.push(Promise.all(jobs));
+    if (order.some((cell) => !smoked.has(cell.r + "," + cell.c))) waits.push(sleep(520));
+    if (waits.length) await Promise.all(waits);
   }
 
   async function slide(a, b) {

@@ -1025,6 +1025,13 @@ body:has(.title-screen:not([hidden])) {
 .tile.press { transform: scale(0.9); }
 .tile.antic { transform: scale(1.08); filter: brightness(1.35); }
 .tile.born { animation: born 0.42s cubic-bezier(.2,1.1,.4,1); }
+.tile.power-row.born { animation: bolo-row 0.5s ease forwards; }
+.tile.power-col.born { animation: bolo-col 0.5s ease forwards; }
+.tile.power-wrap.born, .tile.power-pipe.born { animation: bolo-grosso 0.5s ease forwards; }
+.tile.roll, .tile.roll-col, .tile.cherry { z-index: 4; }
+.tile.roll { animation: roll-smoke 0.72s ease forwards; animation-delay: calc(var(--lit, 0) * 70ms); }
+.tile.roll-col { animation: roll-col 0.72s ease forwards; animation-delay: calc(var(--lit, 0) * 70ms); }
+.tile.cherry { animation: cherry 0.55s ease forwards; animation-delay: calc(var(--lit, 0) * 60ms); }
 .tile svg { transform-origin: 50% 60%; }
 .scorebox strong.pulse { animation: score-pop 0.28s ease; }
 .modal-stars i { display: inline-block; animation: star-in 0.35s ease both; }
@@ -2364,6 +2371,36 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   0% { transform: scale(0.55); filter: brightness(1.8); }
   70% { transform: scale(1.12); }
   100% { transform: none; }
+}
+@keyframes bolo-row {
+  0% { transform: scale(0.22, 1.45); }
+  100% { transform: none; }
+}
+@keyframes bolo-col {
+  0% { transform: scale(1.45, 0.22); }
+  100% { transform: none; }
+}
+@keyframes bolo-grosso {
+  0% { transform: scale(0.35); filter: brightness(1.25); }
+  62% { transform: scale(1.1); filter: none; }
+  100% { transform: none; }
+}
+@keyframes roll-smoke {
+  0% { transform: none; filter: none; opacity: 1; }
+  30% { transform: scale(1.2, 0.38); filter: none; opacity: 1; }
+  58% { transform: scale(1.2, 0.38); filter: sepia(0.9) saturate(2.2) brightness(1.45); opacity: 1; }
+  100% { transform: scale(0.7, 0.22); filter: sepia(1) brightness(0.4); opacity: 0; }
+}
+@keyframes roll-col {
+  0% { transform: none; filter: none; opacity: 1; }
+  30% { transform: scale(0.38, 1.2); filter: none; opacity: 1; }
+  58% { transform: scale(0.38, 1.2); filter: sepia(0.9) saturate(2.2) brightness(1.45); opacity: 1; }
+  100% { transform: scale(0.22, 0.7); filter: sepia(1) brightness(0.4); opacity: 0; }
+}
+@keyframes cherry {
+  0% { transform: none; filter: none; opacity: 1; }
+  35% { transform: scale(1.06); filter: sepia(0.85) saturate(2.4) brightness(1.55); opacity: 1; }
+  100% { transform: scale(0.76); filter: sepia(1) brightness(0.42); opacity: 0; }
 }
 @keyframes score-pop {
   40% { transform: scale(1.18); }
