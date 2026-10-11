@@ -418,12 +418,14 @@ const HempKush = (() => {
     const cover = take(holes, [], i < 15 ? 4 : 6);
     const locks = i >= 7 ? take(holes, cover, 4) : [];
     const hash = i >= 11 ? take(holes, cover.concat(locks), 4) : [];
-    const seeds = i >= 18 ? seedN(holes, cover.concat(locks, hash), 4) : 0;
+    const seeds = i === 15 || i >= 18 ? seedN(holes, cover.concat(locks, hash), 4) : 0;
     const jelly = i >= 3 ? zipN(holes, cover.concat(locks, hash), 6) : [];
+    const metas = colorGoals(i, 4);
+    if (i === 5 && metas[0]) metas[0][0] = "rosa";
     return {
       name,
       moves: movesAt(i),
-      goals: colorGoals(i, 4).concat(seeds ? [["semente", seeds]] : []),
+      goals: metas.concat(seeds ? [["semente", seeds]] : []),
       cover,
       locks,
       hash,
@@ -447,7 +449,7 @@ const HempKush = (() => {
     const locks = i >= 6 ? take(holes, glass, 4) : [];
     const hash = i >= 10 ? take(holes, glass.concat(locks), 4) : [];
     const cover = i >= 18 && i < 22 ? take(holes, glass.concat(locks, hash), 4) : [];
-    const seeds = i === 22 || i === 23 ? seedN(holes, glass.concat(locks, hash, cover), 4) : 0;
+    const seeds = i === 20 || i === 22 || i === 23 ? seedN(holes, glass.concat(locks, hash, cover), 4) : 0;
     const jelly = i >= 3 ? zipN(holes, glass.concat(locks, hash, cover), i >= 14 ? 8 : 6) : [];
     return {
       name,
@@ -568,7 +570,7 @@ const HempKush = (() => {
     return { id: seq++, kind, power: power || null, fresh: !!fresh };
   }
   function cloneBoard(board) {
-    return board.map((row) => row.map((cell) => (cell ? { ...cell, fresh: false } : null)));
+    return board.map((row) => row.map((cell) => (cell ? { ...cell, fresh: false, cut: false } : null)));
   }
   function cloneJelly(jelly) {
     return jelly.map((row) => row.slice());
@@ -770,6 +772,7 @@ const HempKush = (() => {
           const src = board[r - 1][nc];
           if (!src || stuck(src) || src.seed || src.kind === "semente") continue;
           if (typeof src._from !== "number") src._from = r - 1;
+          if (typeof src._fromC !== "number") src._fromC = nc;
           src.fresh = true;
           board[r][c] = src;
           board[r - 1][nc] = null;
@@ -784,7 +787,10 @@ const HempKush = (() => {
   function collapse(board, kinds, random) {
     for (let r = 0; r < ROWS; r += 1) {
       for (let c = 0; c < COLS; c += 1) {
-        if (board[r][c]) delete board[r][c]._from;
+        if (board[r][c]) {
+          delete board[r][c]._from;
+          delete board[r][c]._fromC;
+        }
       }
     }
     dropColumns(board, kinds, random);
@@ -855,7 +861,10 @@ const HempKush = (() => {
       if (!options.length) return;
       const pick = options[Math.floor(random() * options.length)];
       taken.add(pick.id);
-      board[pick.r][pick.c] = tile("hash", null, true);
+      const was = board[pick.r][pick.c].kind;
+      const born = tile("hash", null, false);
+      born.grown = was;
+      board[pick.r][pick.c] = born;
     });
   }
 
@@ -874,31 +883,54 @@ const HempKush = (() => {
     return -1;
   }
 
+  function snapBoard(board) {
+    return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
+  }
+
+  function floorSeeds(board) {
+    const found = [];
+    for (let c = 0; c < COLS; c += 1) {
+      const floor = columnFloor(board, c);
+      if (floor < 0) continue;
+      const piece = board[floor][c];
+      if (piece && piece.seed) found.push({ r: floor, c: c });
+    }
+    return found;
+  }
+
   function deliverSeeds(board, got, kinds, random, queue) {
+    const quadros = [];
     let pending = queue || 0;
     for (let pass = 0; pass < 6; pass += 1) {
-      let fell = false;
-      for (let c = 0; c < COLS; c += 1) {
-        const floor = columnFloor(board, c);
-        if (floor < 0) continue;
-        const piece = board[floor][c];
-        if (!piece || !piece.seed) continue;
+      const piso = floorSeeds(board);
+      if (!piso.length) break;
+      quadros.push({ board: snapBoard(board), piso: piso });
+      const cols = [];
+      piso.forEach((cell) => {
         got.semente = (got.semente || 0) + 1;
-        board[floor][c] = null;
-        fell = true;
-        const top = columnTop(board, c);
-        const there = top >= 0 ? board[top][c] : null;
-        if (pending > 0 && top >= 0 && (!there || (there.kind !== "hash" && there.kind !== "vidro" && there.kind !== "hole" && !there.lock))) {
-          pending -= 1;
-          const born = tile("semente", null, true);
-          born.seed = true;
-          board[top][c] = born;
-        }
-      }
-      if (!fell) break;
+        board[cell.r][cell.c] = null;
+        cols.push(cell.c);
+      });
       collapse(board, kinds, random);
+      cols.forEach((c) => {
+        if (pending <= 0) return;
+        let spot = -1;
+        for (let r = 0; r < ROWS; r += 1) {
+          const piece = board[r][c];
+          if (!piece || !piece.fresh || typeof piece._from === "number") continue;
+          if (piece.seed || piece.lock || piece.power) continue;
+          if (piece.kind === "hash" || piece.kind === "vidro" || piece.kind === "hole" || piece.kind === "semente") continue;
+          spot = r;
+          break;
+        }
+        if (spot < 0) return;
+        const born = tile("semente", null, true);
+        born.seed = true;
+        board[spot][c] = born;
+        pending -= 1;
+      });
     }
-    return pending;
+    return { pending: pending, quadros: quadros };
   }
 
   function applyWave(state, prefer, combo, random, preset) {
@@ -923,20 +955,35 @@ const HempKush = (() => {
     if (!dead.size && !spawned.length) return null;
     dead = expand(board, dead, protect);
     const spared = [];
+    const nicked = [];
     dead.forEach((id) => {
       const [r, c] = id.split(",").map(Number);
       const piece = board[r] && board[r][c];
-      if (piece && (piece.seed || piece.kind === "semente")) spared.push(id);
+      if (!piece) return;
+      if (piece.seed || piece.kind === "semente") spared.push(id);
+      else if (cover[r] && cover[r][c] > 1) nicked.push(id);
     });
     let sparedScore = 0;
     spared.forEach((id) => {
       dead.delete(id);
       const [r, c] = id.split(",").map(Number);
+      const piece = board[r] && board[r][c];
       if (jelly[r] && jelly[r][c]) {
         jelly[r][c] = 0;
         sparedScore += 40 * combo;
       }
       if (cover[r] && cover[r][c] > 0) {
+        if (cover[r][c] > 1 && piece) piece.cut = true;
+        cover[r][c] -= 1;
+        sparedScore += 30 * combo;
+      }
+    });
+    nicked.forEach((id) => {
+      dead.delete(id);
+      const [r, c] = id.split(",").map(Number);
+      const piece = board[r] && board[r][c];
+      if (cover[r] && cover[r][c] > 1) {
+        if (piece) piece.cut = true;
         cover[r][c] -= 1;
         sparedScore += 30 * combo;
       }
@@ -976,12 +1023,14 @@ const HempKush = (() => {
       score += 100;
     });
     collapse(board, state.kinds, random);
-    const seedQueue = deliverSeeds(board, got, state.kinds, random, queue);
+    const entrega = deliverSeeds(board, got, state.kinds, random, queue);
+    const seedQueue = entrega.pending;
     return {
       cleared,
       spawned,
       score,
       combo,
+      chegadas: entrega.quadros,
       power: cleared.some((cell) => cell.power),
       state: {
         ...state,
@@ -1416,7 +1465,28 @@ const HempKush = (() => {
 
 if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
-const VERSAO = "1.0";
+const VERSOES = [
+  {
+    nome: "1.1",
+    notas: [
+      "O ziplok abre e a flor estoura.",
+      "O crumble quebra e o caco sai.",
+      "O primeiro corte encolhe a folha. A flor fica.",
+      "A próxima semente cai do alto. A flor que estava fica.",
+      "Na cena do haxixe, o bloco cresce na casa da flor.",
+      "Na cena da semente, ela encosta no chão e sai.",
+      "Quando o haxixe nasce, ele cresce na casa da flor.",
+      "A semente encosta no chão e a conta sobe. Depois o lugar fecha.",
+      "Quando a peça vem do lado, a queda começa de lá.",
+      "No match, sai a peça que chegou. A outra fica.",
+      "Na cena do haxixe, o bloco é um só.",
+      "Na cena do crumble, o caco é um só.",
+      "Quando a peça assenta, a cascata segue.",
+      "A conta entra pelo nome e a senha. O progresso guarda na loja.",
+    ],
+  },
+];
+const VERSAO = VERSOES[0].nome;
 
 function boot() {
   const mapEl = document.getElementById("screen-map");
@@ -1428,6 +1498,7 @@ function boot() {
   const loadText = document.getElementById("load-text");
   const modal = document.getElementById("modal");
   const SAVE = "hemp-kush-v3";
+  const SESSAO = "hemp-kush-sessao";
   let endNota = "";
   let progress = loadProgress();
   let currentZone = "head";
@@ -1475,8 +1546,74 @@ function boot() {
     try { return JSON.parse(localStorage.getItem(SAVE) || "{}"); }
     catch (err) { return {}; }
   }
+  function loadSessao() {
+    try { return JSON.parse(localStorage.getItem(SESSAO) || "null"); }
+    catch (err) { return null; }
+  }
+  function saveSessao(sess) {
+    if (!sess) localStorage.removeItem(SESSAO);
+    else localStorage.setItem(SESSAO, JSON.stringify({ nome: sess.nome, token: sess.token }));
+  }
+  function mergeFicha(base, extra) {
+    const out = Object.assign({}, base || {});
+    const stars = Object.assign({}, (base && base.stars) || {});
+    const best = Object.assign({}, (base && base.best) || {});
+    const theirs = extra || {};
+    Object.keys(theirs.stars || {}).forEach((id) => {
+      stars[id] = Math.max(Number(stars[id]) || 0, Number(theirs.stars[id]) || 0);
+    });
+    Object.keys(theirs.best || {}).forEach((id) => {
+      best[id] = Math.max(Number(best[id]) || 0, Number(theirs.best[id]) || 0);
+    });
+    out.stars = stars;
+    out.best = best;
+    Object.keys(theirs).forEach((key) => {
+      if (key === "stars" || key === "best") return;
+      if (theirs[key]) out[key] = 1;
+    });
+    return out;
+  }
   function saveProgress() {
     localStorage.setItem(SAVE, JSON.stringify(progress));
+    const sess = loadSessao();
+    if (!sess || !sess.token) return;
+    fetch("/guardar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: sess.token, ficha: progress }),
+    }).catch(() => {});
+  }
+  function paintConta() {
+    const btn = document.getElementById("title-conta");
+    const sair = document.getElementById("conta-sair");
+    const sess = loadSessao();
+    if (btn) btn.textContent = sess && sess.nome ? sess.nome : "Entrar";
+    if (sair) sair.hidden = !(sess && sess.token);
+  }
+  function avisoConta(texto) {
+    const aviso = document.getElementById("conta-aviso");
+    if (aviso) aviso.textContent = texto || "";
+  }
+  async function pullConta() {
+    paintConta();
+    const sess = loadSessao();
+    if (!sess || !sess.token) return;
+    try {
+      const res = await fetch("/sessao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: sess.token }),
+      });
+      if (!res.ok) {
+        saveSessao(null);
+        paintConta();
+        return;
+      }
+      const data = await res.json();
+      progress = mergeFicha(progress, data.ficha);
+      saveProgress();
+      paintConta();
+    } catch (err) {}
   }
   function fireRow(n) {
     return [0, 1, 2].map((i) => '<i class="' + (i < n ? "on" : "") + '">🔥</i>').join("");
@@ -1696,20 +1833,23 @@ function boot() {
   }
 
   function shelfFace(lv) {
+    if (lv.glass && lv.glass.length && lv.seeds) return '<img alt="" src="art/semente.png" draggable="false">';
     if (lv.cover && lv.cover.length) return leafPiece(florDaFase(lv));
     if (lv.seeds) return '<img alt="" src="art/semente.png" draggable="false">';
+    if (lv.glass && lv.glass.length) return cristalHtml();
     if (lv.hash && lv.hash.length) return '<img alt="" src="art/bloco.png" draggable="false">';
     const kit = lv.kit || {};
     if (kit.fino) return '<img class="prep" alt="" src="' + finoSrc(lv) + '" draggable="false">';
     if (kit.bomba) return '<img class="prep" alt="" src="' + bombaSrc(lv) + '" draggable="false">';
     if (kit.pipe) return '<img class="prep" alt="" src="' + pipeSrc(lv) + '" draggable="false">';
     if (kit.bong) return '<img alt="" src="art/bong.png" draggable="false">';
-    if (lv.teach && lv.teach.indexOf("viram o bong") >= 0) return '<img alt="" src="art/bong.png" draggable="false">';
+    if (lv.teach && lv.teach.indexOf("viram o bong") >= 0) return '<img class="prep" alt="" src="' + bongSrc(florDaFase(lv)) + '" draggable="false">';
     const plain = (lv.goals || []).filter((goal) => {
       const kind = goal.kind || "";
       return kind === "verde" || kind === "roxo" || kind === "ambar" || kind === "rosa" || kind === "azul" || kind === "branco";
     });
     if (lv.jelly && lv.jelly.length && plain.length === 1) return '<img alt="" src="art/ziplok.png" draggable="false">';
+    if (lv.locks && lv.locks.length) return rosinPiece(florDaFase(lv));
     const goal = (lv.goals || [])[0];
     const kind = goal ? String(goal.kind || "").replace(/^bong-/, "") : "";
     return '<img alt="" src="' + ((kind && ART[kind]) || "art/verde.png") + '" draggable="false">';
@@ -1922,6 +2062,11 @@ function boot() {
     if (kind === "bomb") return "ambar";
     return kind || "verde";
   }
+  function bongSrc(kind) {
+    const base = prepBase(kind);
+    if (base === "verde" || base === "roxo" || base === "ambar" || base === "rosa") return "art/prep/" + base + "-bong.png";
+    return "art/bong.png";
+  }
   function rosinPiece(kind) {
     const src = (kind && ART[kind]) || ART.verde;
     return '<span class="rosin-piece"><img alt="" src="' + src + '" draggable="false">' + gooHtml(true) + "</span>";
@@ -1964,17 +2109,25 @@ function boot() {
       return '<img class="prep" alt="" src="art/prep/' + base + '-pipe.png" draggable="false">';
     }
     if (power === "bomb") {
-      return '<img class="prep" alt="" src="art/bong.png" draggable="false">';
+      const src = bongSrc(base);
+      if (src !== "art/bong.png") return '<img class="prep" alt="" src="' + src + '" draggable="false">';
+      const flor = ART[kind] || ART.verde;
+      return '<span class="bong-par"><img alt="" src="' + flor + '" draggable="false"><img class="prep" alt="" src="art/bong.png" draggable="false"></span>';
     }
     const src = ART[kind] || ART.verde;
     return '<img alt="" src="' + src + '" draggable="false">';
   }
 
   function goalArt(kind) {
-    if (kind.indexOf("bong-") === 0) return artTag(kind.slice(5)) + '<img alt="" src="art/bong.png" draggable="false">';
+    if (kind.indexOf("bong-") === 0) {
+      const cor = kind.slice(5);
+      const src = bongSrc(cor);
+      if (src !== "art/bong.png") return '<img class="prep bong" alt="" src="' + src + '" draggable="false">';
+      return artTag(cor) + '<img alt="" src="art/bong.png" draggable="false">';
+    }
     if (kind === "fino") return '<img class="prep" alt="" src="' + finoSrc(level) + '" draggable="false">';
     if (kind === "bomba") return '<img class="prep" alt="" src="' + bombaSrc(level) + '" draggable="false">';
-    if (kind === "pipe") return '<img class="prep" alt="" src="' + pipeSrc(level) + '" draggable="false">';
+    if (kind === "pipe") return '<img class="prep pipe" alt="" src="' + pipeSrc(level) + '" draggable="false">';
     if (kind === "bong") return '<img alt="" src="art/bong.png" draggable="false">';
     return artTag(kind);
   }
@@ -2034,9 +2187,10 @@ function boot() {
     const caps = level.stars;
     const fill = document.getElementById("star-fill");
     if (fill) fill.style.width = Math.min(100, Math.round((state.score / caps[2]) * 100)) + "%";
+    const earned = state.score > 0 ? HempKush.starsFor(level, state.score, true) : 0;
     [0, 1, 2].forEach((i) => {
       const star = document.getElementById("star-" + (i + 1));
-      if (star) star.classList.toggle("on", state.score >= caps[i]);
+      if (star) star.classList.toggle("on", earned > i);
     });
     paintKit();
     const stuck = stuckLine();
@@ -2259,7 +2413,11 @@ function boot() {
         const prev = stay.get(r + "," + c);
         if (prev) stay.delete(r + "," + c);
         if (prev && prev.dataset.face === face && !(piece && piece.fresh)) {
-          prev.classList.remove("fresh", "born");
+          prev.classList.remove("fresh", "born", "ember", "antic", "seed-out");
+          if (piece && piece.cut) {
+            prev.classList.add("leaf-cut");
+            piece.cut = false;
+          }
           continue;
         }
         const btn = document.createElement("button");
@@ -2279,10 +2437,16 @@ function boot() {
         if (piece.lock) btn.classList.add("lock");
         if (state.cover && state.cover[r][c] === 2) btn.classList.add("cover-2");
         if (state.cover && state.cover[r][c] === 1) btn.classList.add("cover-1");
+        if (piece.cut) {
+          btn.classList.add("leaf-cut");
+          piece.cut = false;
+        }
         if (piece.fresh) {
           btn.classList.add("fresh");
           const from = typeof piece._from === "number" ? piece._from : -1;
+          const fromC = typeof piece._fromC === "number" ? piece._fromC : c;
           btn.style.setProperty("--fall", String(Math.max(1, r - from)));
+          btn.style.setProperty("--slide", String(fromC - c));
         }
         if (piece.power && piece.fresh) btn.classList.add("born");
         if (state.jelly[r][c]) btn.classList.add("jelly");
@@ -2293,7 +2457,13 @@ function boot() {
         const leaf = state.cover && state.cover[r][c]
           ? '<img class="leaf" alt="" src="art/folha.png" draggable="false">'
           : "";
-        const art = piece.kind === "vidro" ? cristalHtml() : artTag(piece.kind, piece.power);
+        const art = piece.grown && ART[piece.grown]
+          ? '<img class="hash-was" alt="" src="' + ART[piece.grown] + '" draggable="false"><img class="hash-now" alt="" src="art/bloco.png" draggable="false">'
+          : (piece.kind === "vidro" ? cristalHtml() : artTag(piece.kind, piece.power));
+        if (piece.grown) {
+          btn.classList.add("hash-grown");
+          piece.grown = false;
+        }
         const goo = piece.lock ? gooHtml() : "";
         btn.innerHTML = bag + leaf + art + goo;
         if (prev) prev.replaceWith(btn);
@@ -2306,6 +2476,12 @@ function boot() {
 
   function paintKit() {
     const handed = (level && level.kit) || {};
+    if (boardEl) {
+      boardEl.style.setProperty("--mark-fino", 'url("' + finoSrc(level) + '")');
+      boardEl.style.setProperty("--mark-bomba", 'url("' + bombaSrc(level) + '")');
+      boardEl.style.setProperty("--mark-pipe", 'url("' + pipeSrc(level) + '")');
+      boardEl.style.setProperty("--mark-bong", 'url("' + bongSrc(florDaFase(level)) + '")');
+    }
     ["fino", "bomba", "bong", "pipe"].forEach((name) => {
       const btn = document.querySelector('[data-tool="' + name + '"]');
       const qty = document.getElementById("qty-" + name);
@@ -2456,6 +2632,8 @@ function boot() {
 
   async function showLoading(text) {
     loadText.textContent = text;
+    const sprout = document.querySelector("#loading .sprout");
+    if (sprout && level) sprout.innerHTML = shelfFace(level);
     loading.hidden = false;
     await sleep(260);
     loading.hidden = true;
@@ -2508,7 +2686,8 @@ function boot() {
       if (goal.kind.indexOf("bong-") === 0) {
         const cor = goal.kind.slice(5);
         const broto = (fala[cor] && fala[cor][2]) || "art/verde.png";
-        pedidos.push(["Fume", goal.n, (noBong[cor] || "a cor") + " no bong", [broto, "art/bong.png"]]);
+        const src = bongSrc(cor);
+        pedidos.push(["Fume", goal.n, (noBong[cor] || "a cor") + " no bong", src !== "art/bong.png" ? src : [broto, "art/bong.png"]]);
         return;
       }
       const linha = fala[goal.kind];
@@ -2554,7 +2733,8 @@ function boot() {
     you.textContent = best ? best.toLocaleString("pt-BR") : "Ainda não";
     you.classList.toggle("words", !best);
     document.getElementById("brief-marks").innerHTML = lv.stars.map((n, i) => {
-      return "<li><i>" + "🔥".repeat(i + 1) + "</i><b>" + n.toLocaleString("pt-BR") + "</b></li>";
+      const mark = i === 0 ? "passou" : n.toLocaleString("pt-BR");
+      return "<li><i>" + "🔥".repeat(i + 1) + "</i><b>" + mark + "</b></li>";
     }).join("");
     passPlay = viaPass ? id : 0;
     if (viaPass) {
@@ -2609,13 +2789,46 @@ function boot() {
     return n;
   }
 
-  async function resolve(moved) {
+  async function restFall() {
+    const span = fallSpan(state.board);
+    const fallMs = 180 + span * 70;
+    await sleep(stillFeel() ? 20 : fallMs + 80);
+  }
+
+  function pieceBits(el) {
+    return Array.from(el.children).filter((node) => !node.classList.contains("bag") && !node.classList.contains("leaf"));
+  }
+
+  function commitSwap(a, b) {
+    const elA = tileEl(a);
+    const elB = tileEl(b);
+    if (!elA || !elB) return;
+    elA.getAnimations().forEach((anim) => anim.cancel());
+    elB.getAnimations().forEach((anim) => anim.cancel());
+    elA.style.zIndex = "";
+    elB.style.zIndex = "";
+    const bitsA = pieceBits(elA);
+    const bitsB = pieceBits(elB);
+    bitsA.forEach((node) => elB.appendChild(node));
+    bitsB.forEach((node) => elA.appendChild(node));
+    const keep = { tile: 1, deck: 1, hole: 1, "cover-1": 1, "cover-2": 1, jelly: 1, fresh: 1, born: 1, on: 1, ember: 1, antic: 1, bad: 1 };
+    const owned = (el) => Array.from(el.classList).filter((name) => !keep[name]);
+    const ownedA = owned(elA);
+    const ownedB = owned(elB);
+    ownedA.forEach((name) => elA.classList.remove(name));
+    ownedB.forEach((name) => elB.classList.remove(name));
+    ownedA.forEach((name) => elB.classList.add(name));
+    ownedB.forEach((name) => elA.classList.add(name));
+  }
+
+  async function resolve(moved, a, b) {
     locked = true;
     selected = null;
     const hint = document.getElementById("hint");
     if (hint) hint.textContent = phaseLine();
     for (let i = 0; i < moved.waves.length; i += 1) {
       const wave = moved.waves[i];
+      if (i === 0 && a && b) commitSwap(a, b);
       if (typeof Feel !== "undefined") {
         Feel.anticipate(boardEl, wave);
         const hold = Feel.hold(wave);
@@ -2626,16 +2839,29 @@ function boot() {
         boardEl.classList.add("shake");
         Snd.power();
       } else Snd.pop(wave.combo);
-      await ember(wave.cleared, wave.bong);
+      await ember(wave.cleared);
       if (wave.bong && typeof Feel !== "undefined" && Feel.rise) await Feel.rise(wave.bong);
-      await sleep(stillFeel() ? 40 : 280);
-      state = wave.state;
-      const span = fallSpan(state.board);
+      await sleep(40);
+      const depois = wave.state;
+      const chegadas = wave.chegadas || [];
+      for (let n = 0; n < chegadas.length; n += 1) {
+        const quadro = chegadas[n];
+        state = Object.assign({}, depois, { board: quadro.board });
+        paint();
+        boardEl.classList.remove("shake");
+        await restFall();
+        if (!stillFeel()) {
+          quadro.piso.forEach((cell) => {
+            const el = tileEl(cell);
+            if (el) el.classList.add("seed-out");
+          });
+          await sleep(420);
+        }
+      }
+      state = depois;
       paint();
       boardEl.classList.remove("shake");
-      const fallMs = 180 + span * 70;
-      const beat = stillFeel() ? 20 : (wave.combo >= 3 ? 880 : wave.combo >= 2 ? 640 : 400);
-      await sleep(stillFeel() ? 20 : Math.max(beat, fallMs));
+      await restFall();
     }
     state = moved.state;
     paint();
@@ -2672,7 +2898,7 @@ function boot() {
     Snd.swap();
     if (typeof Feel !== "undefined") Feel.snap();
     await slide(a, b);
-    resolve(moved);
+    resolve(moved, a, b);
   }
 
   function tileEl(cell) {
@@ -2693,36 +2919,14 @@ function boot() {
     return list;
   }
 
-  function puffAt(el) {
-    const box = el.getBoundingClientRect();
-    const smoke = document.createElement("i");
-    smoke.className = "puff";
-    smoke.style.left = box.left + "px";
-    smoke.style.top = box.top + "px";
-    smoke.style.width = box.width + "px";
-    smoke.style.height = box.width + "px";
-    document.body.appendChild(smoke);
-    setTimeout(() => smoke.remove(), 900);
-  }
-
-  async function ember(cells, bong) {
+  async function ember(cells) {
     const order = burnOrder(cells);
-    if (stillFeel()) {
-      order.forEach((cell) => {
-        const el = boardEl.querySelector('[data-r="' + cell.r + '"][data-c="' + cell.c + '"]');
-        if (el) el.classList.add(bong ? "burn" : "ember");
-      });
-      return;
-    }
-    const gap = order.length > 8 ? 90 : 140;
-    for (let i = 0; i < order.length; i += 1) {
-      const el = boardEl.querySelector('[data-r="' + order[i].r + '"][data-c="' + order[i].c + '"]');
-      if (el) {
-        el.classList.add(bong ? "burn" : "ember");
-        puffAt(el);
-      }
-      if (i < order.length - 1) await sleep(gap);
-    }
+    order.forEach((cell) => {
+      const el = boardEl.querySelector('[data-r="' + cell.r + '"][data-c="' + cell.c + '"]');
+      if (el) el.classList.add("ember");
+    });
+    if (stillFeel() || !order.length) return;
+    await sleep(520);
   }
 
   async function slide(a, b) {
@@ -3051,32 +3255,32 @@ function boot() {
     if (!box) return;
     if (kind === "grow") {
       box.hidden = false;
-      box.innerHTML = '<img alt="" src="art/bloco.png" draggable="false"><img class="hash-born" alt="" src="art/bloco.png" draggable="false">';
+      box.innerHTML = '<span class="hash-grow"><img class="hash-bud" alt="" src="art/verde.png" draggable="false"><img class="hash-born" alt="" src="art/bloco.png" draggable="false"></span>';
       return;
     }
     if (kind === "cut") {
       box.hidden = false;
-      box.innerHTML = '<img alt="" src="art/roxo.png" draggable="false"><img alt="" src="art/roxo.png" draggable="false"><img alt="" src="art/roxo.png" draggable="false"><img class="cut-away" alt="" src="art/bloco.png" draggable="false">';
+      box.innerHTML = '<img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/bloco.png" draggable="false">';
       return;
     }
     if (kind === "film") {
       box.hidden = false;
-      box.innerHTML = '<span class="rosin-hold"><img alt="" src="art/roxo.png" draggable="false">' + gooHtml() + "</span>";
+      box.innerHTML = '<span class="rosin-hold"><img alt="" src="art/verde.png" draggable="false">' + gooHtml() + "</span>";
       return;
     }
     if (kind === "solta") {
       box.hidden = false;
-      box.innerHTML = '<img class="rosin-buddy" alt="" src="art/roxo.png" draggable="false"><span class="rosin-hold gone"><img alt="" src="art/roxo.png" draggable="false">' + gooHtml(false, "peel") + '</span><img class="rosin-buddy" alt="" src="art/roxo.png" draggable="false">';
+      box.innerHTML = '<img class="rosin-buddy cut-away" alt="" src="art/verde.png" draggable="false"><span class="rosin-hold gone"><img alt="" src="art/verde.png" draggable="false">' + gooHtml(false, "peel") + '</span><img class="rosin-buddy cut-away" alt="" src="art/verde.png" draggable="false">';
       return;
     }
     if (kind === "parada") {
       box.hidden = false;
-      box.innerHTML = '<div class="seed-col"><img alt="" src="art/semente.png" draggable="false"><img alt="" src="art/verde.png" draggable="false"><img alt="" src="art/roxo.png" draggable="false"></div>';
+      box.innerHTML = '<div class="seed-col"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><img alt="" src="art/semente.png" draggable="false"><img class="match-gone" alt="" src="art/verde.png" draggable="false"></div>';
       return;
     }
     if (kind === "chao") {
       box.hidden = false;
-      box.innerHTML = '<div class="seed-col"><img class="seed-drop" alt="" src="art/semente.png" draggable="false"><img class="seed-clear" alt="" src="art/verde.png" draggable="false"><img class="seed-clear" alt="" src="art/roxo.png" draggable="false"></div>';
+      box.innerHTML = '<div class="seed-col"><img alt="" src="art/verde.png" draggable="false"><img class="seed-drop" alt="" src="art/semente.png" draggable="false"><img class="seed-clear" alt="" src="art/verde.png" draggable="false"></div>';
       return;
     }
     if (kind === "folha") {
@@ -3086,17 +3290,17 @@ function boot() {
     }
     if (kind === "colhe") {
       box.hidden = false;
-      box.innerHTML = '<span class="leaf-hold wide"><img alt="" src="art/verde.png" draggable="false"><img class="leaf-on harvest" alt="" src="art/folha.png" draggable="false"></span>';
+      box.innerHTML = '<span class="leaf-hold wide"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="leaf-on harvest" alt="" src="art/folha.png" draggable="false"></span>';
       return;
     }
     if (kind === "preso") {
       box.hidden = false;
-      box.innerHTML = '<div class="crumble-row"><img class="match-gone" alt="" src="art/ambar.png" draggable="false"><img class="match-gone" alt="" src="art/ambar.png" draggable="false"><img class="match-gone" alt="" src="art/ambar.png" draggable="false"><span class="crumble-gems crumble-stay"><span class="tile vidro gem-a">' + cristalHtml() + '</span><span class="tile vidro gem-b">' + cristalHtml() + '</span><span class="tile vidro gem-c">' + cristalHtml() + "</span></span></div>";
+      box.innerHTML = '<div class="crumble-row"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><span class="crumble-gems crumble-stay"><span class="tile vidro gem-one">' + cristalHtml() + "</span></span></div>";
       return;
     }
     if (kind === "quebra") {
       box.hidden = false;
-      box.innerHTML = '<div class="crumble-row"><img class="power-in prep" alt="" src="art/prep/ambar-bomba.png" draggable="false"><span class="crumble-gems crumble-shatter"><span class="tile vidro gem-a">' + cristalHtml() + '</span><span class="tile vidro gem-b">' + cristalHtml() + '</span><span class="tile vidro gem-c">' + cristalHtml() + "</span></span></div>";
+      box.innerHTML = '<div class="crumble-row"><img class="power-in prep" alt="" src="art/prep/verde-fino.png" draggable="false"><span class="crumble-gems crumble-shatter"><span class="tile vidro gem-one">' + cristalHtml() + "</span></span></div>";
       return;
     }
     box.hidden = true;
@@ -3185,10 +3389,63 @@ function boot() {
   if (passShop) passShop.onclick = () => stepPass();
   bindWorld();
   const versionEl = document.getElementById("title-version");
+  const versaoPapel = document.getElementById("versao-papel");
   if (versionEl) versionEl.textContent = VERSAO;
+  if (versaoPapel) {
+    versaoPapel.innerHTML = VERSOES.map((versao) => {
+      const itens = versao.notas.map((linha) => "<li>" + linha + "</li>").join("");
+      return '<p class="versao-nome">' + versao.nome + "</p><ul>" + itens + "</ul>";
+    }).join("");
+  }
+  if (versionEl && versaoPapel) versionEl.onclick = () => { versaoPapel.hidden = !versaoPapel.hidden; };
   const titlePlay = document.getElementById("title-play");
-  if (titlePlay) titlePlay.onclick = () => { leaveTitle(); goWorld(false); };
+  const contaPronta = pullConta();
+  if (titlePlay) titlePlay.onclick = async () => {
+    await contaPronta;
+    leaveTitle();
+    goWorld(false);
+  };
   else goWorld(false);
+  const titleConta = document.getElementById("title-conta");
+  const contaPapel = document.getElementById("conta-papel");
+  if (titleConta && contaPapel) {
+    titleConta.onclick = () => { contaPapel.hidden = !contaPapel.hidden; };
+    contaPapel.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const nome = document.getElementById("conta-nome").value.trim();
+      const senha = document.getElementById("conta-senha").value;
+      if (!nome || !senha) {
+        avisoConta("Escreve o nome e a senha.");
+        return;
+      }
+      try {
+        const res = await fetch("/entrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome: nome, senha: senha }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          avisoConta(data.erro === "senha" ? "Essa senha não abre essa conta." : "O nome fica com letras e números, de 2 a 16.");
+          return;
+        }
+        saveSessao({ nome: data.nome, token: data.token });
+        progress = mergeFicha(progress, data.ficha);
+        saveProgress();
+        document.getElementById("conta-senha").value = "";
+        avisoConta(data.novo ? "Conta aberta. O progresso fica na loja." : "Entrou. A loja devolveu o progresso.");
+        paintConta();
+      } catch (err) {
+        avisoConta("A loja não respondeu. O jogo segue neste celular.");
+      }
+    });
+  }
+  const contaSair = document.getElementById("conta-sair");
+  if (contaSair) contaSair.onclick = () => {
+    saveSessao(null);
+    avisoConta("Saiu. O celular continua com a fase.");
+    paintConta();
+  };
   const titleFeedback = document.getElementById("title-feedback");
   if (titleFeedback) titleFeedback.onclick = () => openFeedback("início", null);
 }

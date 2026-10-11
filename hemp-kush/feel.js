@@ -191,7 +191,11 @@ const Feel = (() => {
     if (power === "row" || power === "col") return "art/prep/" + base + "-fino.png";
     if (power === "wrap") return "art/prep/" + base + "-bomba.png";
     if (power === "pipe") return "art/prep/" + base + "-pipe.png";
-    if (power === "bomb") return "art/bong.png";
+    if (power === "bomb") {
+      const cor = glass(kind);
+      if (cor === "verde" || cor === "roxo" || cor === "ambar" || cor === "rosa") return "art/prep/" + cor + "-bong.png";
+      return "art/bong.png";
+    }
     const art = {
       verde: "art/verde.png", roxo: "art/roxo.png", ambar: "art/ambar.png", rosa: "art/rosa.png",
       azul: "art/azul.png", branco: "art/branco.png", hash: "art/bloco.png", folha: "art/folha.png",
@@ -203,18 +207,60 @@ const Feel = (() => {
 
   function spark(board, box, kind, power) {
     if (!box || bits > 48 || still()) return;
-    const src = pieceSrc(kind, power);
+    if (kind === "vidro") {
+      const gem = board.querySelector(".cristal");
+      if (!gem) return;
+      bits += 1;
+      const dot = document.createElement("i");
+      dot.className = "fx-bit";
+      dot.style.left = box.x + "px";
+      dot.style.top = box.y + "px";
+      dot.appendChild(gem.cloneNode(true));
+      const ang = Math.random() * Math.PI * 2;
+      dot.style.setProperty("--dx", Math.cos(ang) * 22 + "px");
+      dot.style.setProperty("--dy", Math.sin(ang) * 16 + "px");
+      board.appendChild(dot);
+      setTimeout(() => { dot.remove(); bits = Math.max(0, bits - 1); }, 460);
+      return;
+    }
+    const flor = power === "bomb" && kind === "azul" ? "art/azul.png"
+      : power === "bomb" && kind === "branco" ? "art/branco.png" : "";
+    const src = flor ? "art/bong.png" : pieceSrc(kind, power);
     if (!src) return;
     bits += 1;
     const dot = document.createElement("i");
-    dot.className = "fx-bit";
+    dot.className = "fx-bit" + (flor ? " bong-par" : "");
     dot.style.left = box.x + "px";
     dot.style.top = box.y + "px";
+    if (flor) {
+      const flower = document.createElement("img");
+      flower.alt = "";
+      flower.draggable = false;
+      flower.src = flor;
+      dot.appendChild(flower);
+    }
     const img = document.createElement("img");
     img.alt = "";
     img.draggable = false;
     img.src = src;
+    const prep = box.el && box.el.querySelector("img.prep");
+    if (prep) {
+      img.classList.add("prep");
+      if (prep.classList.contains("col")) img.classList.add("col");
+    }
     dot.appendChild(img);
+    const goo = box.el && box.el.querySelector(".goo");
+    if (goo) dot.appendChild(goo.cloneNode(true));
+    const leaf = box.el && box.el.querySelector("img.leaf");
+    if (leaf) {
+      if (box.el.classList.contains("cover-1")) dot.classList.add("cover-1");
+      dot.appendChild(leaf.cloneNode(true));
+    }
+    const bag = box.el && box.el.querySelector("img.bag");
+    if (bag) {
+      if (box.el.classList.contains("jelly")) dot.classList.add("jelly");
+      dot.appendChild(bag.cloneNode(true));
+    }
     const ang = Math.random() * Math.PI * 2;
     dot.style.setProperty("--dx", Math.cos(ang) * 22 + "px");
     dot.style.setProperty("--dy", Math.sin(ang) * 16 + "px");
@@ -331,15 +377,20 @@ const Feel = (() => {
     if (kind === "flor") return "roxo";
     if (kind === "semente" || kind === "bloco") return "bloco";
     if (kind === "bomb") return "ambar";
-    return COLOR[kind] ? kind : "verde";
+    if (kind === "verde" || kind === "roxo" || kind === "ambar" || kind === "rosa") return kind;
+    return "verde";
   }
 
   function rise(kind) {
     if (still()) return Promise.resolve();
     const layer = document.createElement("div");
     layer.className = "bong-rise";
-    layer.innerHTML = '<img alt="" src="art/prep/' + glass(kind) + '-bong.png" draggable="false">'
-      + '<span class="smoke"></span><span class="smoke b"></span><span class="smoke c"></span>';
+    const flor = kind === "azul" ? "art/azul.png" : kind === "branco" ? "art/branco.png" : "";
+    const bong = flor ? "art/bong.png" : "art/prep/" + glass(kind) + "-bong.png";
+    const par = flor
+      ? '<span class="bong-par"><img alt="" src="' + flor + '" draggable="false"><img alt="" src="' + bong + '" draggable="false"></span>'
+      : '<img alt="" src="' + bong + '" draggable="false">';
+    layer.innerHTML = par;
     document.body.appendChild(layer);
     tone(160, 0.42, "sawtooth", 0.05);
     tone(420, 0.28, "triangle", 0.04, 0.12);

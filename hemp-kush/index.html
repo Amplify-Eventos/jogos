@@ -32,6 +32,14 @@
       <div class="title-ui">
         <button type="button" id="title-settings" class="feel-open title-settings">Configurações</button>
         <button type="button" id="title-feedback" class="title-feedback">Feedback</button>
+        <button type="button" id="title-conta" class="title-conta">Entrar</button>
+        <form id="conta-papel" class="conta-papel" hidden>
+          <label>Nome <input id="conta-nome" name="nome" autocomplete="username" maxlength="16" /></label>
+          <label>Senha <input id="conta-senha" name="senha" type="password" autocomplete="current-password" maxlength="40" /></label>
+          <p id="conta-aviso"></p>
+          <button type="submit" id="conta-entrar">Entrar</button>
+          <button type="button" id="conta-sair" hidden>Sair</button>
+        </form>
         <div id="feel-panel" class="feel-panel" hidden>
           <label><input type="checkbox" id="feel-motion" checked /> Movimento</label>
           <label><input type="checkbox" id="feel-flash" checked /> Flashes</label>
@@ -40,18 +48,21 @@
           <label><input type="checkbox" id="feel-haptic" checked /> Vibração</label>
         </div>
         <button type="button" id="title-play" class="title-play">Jogar</button>
-        <p id="title-version" class="title-version"></p>
+        <div id="versao-papel" class="versao-papel" hidden></div>
+        <button type="button" id="title-version" class="title-version"></button>
       </div>
     </section>
 
     <section id="screen-hire" class="screen hire" hidden>
       <img class="hire-shop" alt="" src="art/loja-recebe.jpg" />
-      <button type="button" id="story-pass-shop" class="story-pass">História</button>
       <div class="hire-talk">
         <p class="hire-name" id="hire-name">Beto</p>
         <p class="hire-line" id="hire-line"></p>
         <div class="hire-demo" id="hire-demo" hidden></div>
-        <button type="button" id="hire-next">Continua</button>
+        <div class="hire-row">
+          <button type="button" id="hire-next">Continua</button>
+          <button type="button" id="story-pass-shop" class="story-pass">História</button>
+        </div>
       </div>
     </section>
 
@@ -131,7 +142,7 @@
 
     <div id="loading" class="loading" hidden>
       <div class="loading-bud">
-        <img class="sprout" alt="" src="art/verde.png" draggable="false" />
+        <span class="sprout"><img alt="" src="art/verde.png" draggable="false" /></span>
         <p id="load-text">Abrindo a loja…</p>
       </div>
     </div>
