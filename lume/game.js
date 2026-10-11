@@ -128,6 +128,7 @@
         vx: 0, vy: 0, feridoAte: 0, flash: 0, marSom: 0
       },
       inimigos: [],
+      corpos: [],
       tiros: [],
       brasas: [],
       pocos: [],
@@ -694,9 +695,18 @@
       }
     }
 
+    if (s.corpos.length) {
+      var ci;
+      for (ci = s.corpos.length - 1; ci >= 0; ci--) {
+        if (s.t >= s.corpos[ci].ate) s.corpos.splice(ci, 1);
+      }
+    }
     for (i = s.inimigos.length - 1; i >= 0; i--) {
       e = s.inimigos[i];
       if (e.hp <= 0) {
+        if (e.tipo === "caranguejo" || e.tipo === "gaivota" || e.tipo === "onda") {
+          s.corpos.push({ tipo: e.tipo, x: e.x, y: e.y, desenho: e.desenho, ate: s.t + 0.45 });
+        }
         soltar(s, e);
         s.inimigos.splice(i, 1);
         continue;
@@ -815,6 +825,12 @@ function pagina(api) {
     caranguejo: "art/caranguejo.png",
     gaivota: "art/gaivota.png",
     onda: "art/onda.png",
+    caranguejoAgir: "art/caranguejo-agir.png",
+    caranguejoCair: "art/caranguejo-cair.png",
+    gaivotaAgir: "art/gaivota-agir.png",
+    gaivotaCair: "art/gaivota-cair.png",
+    ondaAgir: "art/onda-agir.png",
+    ondaCair: "art/onda-cair.png",
     vaga: "art/vaga.png",
     brasa: "art/brasa.png",
     fagulha: "art/fagulha.png",
@@ -1249,6 +1265,18 @@ function pagina(api) {
     }
   }
 
+  function peca(img, x, y, lado, ang, alfa) {
+    if (!img || !img.complete || !img.naturalWidth) return false;
+    var alt = lado * img.naturalHeight / img.naturalWidth;
+    ctx.save();
+    ctx.translate(x, y);
+    if (ang) ctx.rotate(ang + Math.PI / 2);
+    ctx.globalAlpha = alfa == null ? 1 : alfa;
+    ctx.drawImage(img, -lado / 2, -alt / 2, lado, alt);
+    ctx.restore();
+    return true;
+  }
+
   function sprite(img, x, y, w, ang, alfa, escX, escY) {
     if (!img || !img.complete || !img.naturalWidth) return;
     ctx.save();
@@ -1308,10 +1336,20 @@ function pagina(api) {
       g = estado.tiros[i];
       sprite(imgs.fagulha, g.x, g.y, g.largo ? 36 : 22, Math.atan2(g.vy, g.vx), 1);
     }
+    for (i = 0; i < (estado.corpos || []).length; i++) {
+      var c = estado.corpos[i];
+      if (estado.t > c.ate) continue;
+      peca(imgs[c.tipo + "Cair"], c.x, c.y, c.desenho || 64, 0, 1);
+    }
     for (i = 0; i < estado.inimigos.length; i++) {
       e = estado.inimigos[i];
       var escY = 1;
       var angE = e.tipo === "vaga" ? estado.t * 0.35 : e.ang;
+      var agir = null;
+      if (e.tipo === "gaivota" && e.impulso > 0) agir = imgs.gaivotaAgir;
+      else if (e.tipo === "caranguejo" && dist(e.x, e.y, p.x, p.y) < p.raio + e.raio + 36) agir = imgs.caranguejoAgir;
+      else if (e.tipo === "onda" && e.pocoEm > 2.2) agir = imgs.ondaAgir;
+      if (agir && peca(agir, e.x, e.y, e.desenho, e.ang, e.flash > 0 ? 0.55 : 1)) continue;
       if (e.tipo === "gaivota") escY = 1 + Math.sin(estado.t * 16 + e.id) * 0.16;
       if (e.tipo === "caranguejo") angE += Math.sin(estado.t * 11 + e.id) * 0.18;
       if (e.tipo === "onda") angE += Math.sin(estado.t * 2 + e.id) * 0.25;
