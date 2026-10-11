@@ -639,6 +639,7 @@
           }
         }
         evento(s, "tiro");
+        p.acertaAte = s.t + 0.2;
       }
     }
 
@@ -808,6 +809,9 @@ function pagina(api) {
   var audio = criarAudio();
   var arquivos = {
     faroleiro: "art/faroleiro.png",
+    andar: "art/andar.png",
+    acertar: "art/acertar.png",
+    cair: "art/cair.png",
     caranguejo: "art/caranguejo.png",
     gaivota: "art/gaivota.png",
     onda: "art/onda.png",
@@ -1327,16 +1331,28 @@ function pagina(api) {
     }
     var anda = Math.sqrt((p.vx || 0) * (p.vx || 0) + (p.vy || 0) * (p.vy || 0));
     var bob = Math.sin(estado.t * (7 + anda * 0.03)) * (anda > 28 ? 3.2 : 0.8);
-    var escX = 1 + Math.min(0.1, anda / 2400);
-    var escYp = 1 - Math.min(0.07, anda / 3200);
-    if (estado.fase === "derrota" && imgs.faroleiro && imgs.faroleiro.complete) {
+    var corpo = imgs.faroleiro;
+    var lado = 64;
+    var angCorpo = p.ang;
+    if (estado.fase === "derrota" && imgs.cair && imgs.cair.complete && imgs.cair.naturalWidth) {
+      corpo = imgs.cair;
+      lado = 120;
+      angCorpo = 0;
+      bob = 0;
+    } else if (estado.t < (p.acertaAte || 0) && imgs.acertar && imgs.acertar.complete && imgs.acertar.naturalWidth) {
+      corpo = imgs.acertar;
+      lado = 86;
+    } else if (anda > 28 && imgs.andar && imgs.andar.complete && imgs.andar.naturalWidth) {
+      corpo = imgs.andar;
+    }
+    if (corpo && corpo.complete && corpo.naturalWidth) {
+      var altCorpo = lado * corpo.naturalHeight / corpo.naturalWidth;
       ctx.save();
-      ctx.translate(p.x, p.y + 16);
-      ctx.rotate(p.ang + Math.PI);
-      ctx.drawImage(imgs.faroleiro, -32, -32, 64, 64);
+      ctx.translate(p.x, p.y + bob);
+      if (angCorpo) ctx.rotate(angCorpo + Math.PI / 2);
+      ctx.globalAlpha = p.flash > 0 && estado.fase !== "derrota" ? 0.6 : 1;
+      ctx.drawImage(corpo, -lado / 2, -altCorpo / 2, lado, altCorpo);
       ctx.restore();
-    } else {
-      sprite(imgs.faroleiro, p.x, p.y + bob, 64, p.ang, p.flash > 0 ? 0.6 : 1, escX, escYp);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (estado.fase === "jogando" || estado.fase === "carta") {
