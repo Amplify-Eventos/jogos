@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.4",
+    notas: [
+      "O bong puxa a mesa e sobe.",
+    ],
+  },
+  {
     nome: "1.3",
     notas: [
       "O fino se bola com as peças e aparece enrolado.",
@@ -2947,6 +2953,33 @@ function boot() {
       el.classList.add(cls);
       smoked.add(cell.r + "," + cell.c);
     };
+    order.forEach((cell) => {
+      if (cell.power !== "bomb") return;
+      const elBomb = tileEl(cell);
+      if (!elBomb) return;
+      const box = elBomb.getBoundingClientRect();
+      mark(cell, "cherry", 0);
+      order.forEach((spot) => {
+        const id = spot.r + "," + spot.c;
+        if (smoked.has(id)) return;
+        const el = tileEl(spot);
+        smoked.add(id);
+        if (!el || stillFeel() || !el.animate) return;
+        el.classList.remove("antic");
+        const here = el.getBoundingClientRect();
+        const dx = (box.left + box.width / 2) - (here.left + here.width / 2);
+        const dy = (box.top + box.height / 2) - (here.top + here.height / 2);
+        const dist = Math.max(Math.abs(spot.r - cell.r), Math.abs(spot.c - cell.c));
+        jobs.push(el.animate(
+          [
+            { transform: "none", opacity: 1, filter: "none" },
+            { transform: "translate(" + (dx * 0.35) + "px," + (dy * 0.35) + "px) scale(1.04)", opacity: 1, filter: "sepia(0.8) saturate(2) brightness(1.4)", offset: 0.35 },
+            { transform: "translate(" + dx + "px," + dy + "px) scale(0.2)", opacity: 0, filter: "sepia(1) brightness(0.5)" },
+          ],
+          { duration: 460, delay: dist * 36, easing: "cubic-bezier(.22,.7,.3,1)", fill: "forwards" }
+        ).finished);
+      });
+    });
     order.forEach((cell) => {
       if (cell.power !== "row" && cell.power !== "col") return;
       const line = order.filter((other) => (cell.power === "row" ? other.r === cell.r : other.c === cell.c));
