@@ -2797,7 +2797,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .rosin-hold.gone > img:first-child { animation: hash-cut 1.1s ease forwards; }
 @keyframes film-peel {
   0%, 28% { opacity: 1; transform: none; }
-  70%, 100% { opacity: 0; transform: translateY(-14px) scale(1.05); }
+  100% { opacity: 0; transform: translateY(18px) scale(1.2, 0.62); }
 }
 .feel-still .hire-demo .rosin-film.peel,
 .feel-still .hire-demo .rosin-hold .goo.peel { animation: none; opacity: 0; }
