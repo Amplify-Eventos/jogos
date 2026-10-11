@@ -41,38 +41,38 @@
       "A coroa fica mais forte.",
       "Seis luzes fecham a coroa."
     ]},
-    pulso: { nome: "Pulso", max: 5, icone: "art/coroa.png", textos: [
+    pulso: { nome: "Pulso", max: 5, icone: "art/clarao.png", textos: [
       "A lanterna solta um anel de luz.",
       "O anel sai mais vezes e maior.",
       "O anel fica mais forte.",
       "O pulso encurta e alarga.",
       "O anel quase toma o cais."
     ]},
-    ima: { nome: "Ímã", max: 4, icone: "art/brasa.png", textos: [
+    ima: { nome: "Ímã", max: 4, icone: "art/ima.png", textos: [
       "As brasas vêm de mais longe.",
       "O alcance do ímã cresce.",
       "Quase toda brasa atravessa o cais.",
       "A brasa não fica no chão."
     ]},
-    passo: { nome: "Passo", max: 4, icone: "art/faroleiro.png", textos: [
+    passo: { nome: "Passo", max: 4, icone: "art/rastro.png", textos: [
       "O faroleiro anda mais rápido.",
       "O passo abre.",
       "Dá para cortar a maré.",
       "Passo de quem conhece o cais."
     ]},
-    vidro: { nome: "Vidro", max: 4, icone: "art/faroleiro.png", textos: [
+    vidro: { nome: "Vidro", max: 4, icone: "art/vidro.png", textos: [
       "Aguenta mais e recupera um pouco.",
       "Mais fôlego e um descanso.",
       "A maré precisa insistir.",
       "O vidro do farol segura."
     ]},
-    pavio: { nome: "Pavio", max: 4, icone: "art/fagulha.png", textos: [
+    pavio: { nome: "Pavio", max: 4, icone: "art/pavio.png", textos: [
       "A lanterna trabalha mais rápido.",
       "Menos espera entre os golpes.",
       "A luz não descansa.",
       "O pavio fica curto."
     ]},
-    bruma: { nome: "Bruma", max: 4, icone: "art/onda.png", textos: [
+    bruma: { nome: "Bruma", max: 4, icone: "art/bruma.png", textos: [
       "A névoa corta um pouco o golpe.",
       "A maré dói menos.",
       "O casaco bebe o impacto.",
@@ -81,13 +81,13 @@
     brasa: { nome: "Brasa", max: 99, icone: "art/brasa.png", textos: [
       "Recupera uma parte da vida."
     ]},
-    labareda: { nome: "Labareda", max: 1, icone: "art/fagulha.png", textos: [
+    labareda: { nome: "Labareda", max: 1, icone: "art/labareda.png", textos: [
       "A fagulha evolui: mais larga, mais forte, atravessa a maré."
     ]},
-    aureola: { nome: "Auréola", max: 1, icone: "art/coroa.png", textos: [
+    aureola: { nome: "Auréola", max: 1, icone: "art/aureola.png", textos: [
       "A coroa evolui numa auréola larga."
     ]},
-    clarao: { nome: "Clarão", max: 1, icone: "art/coroa.png", textos: [
+    clarao: { nome: "Clarão", max: 1, icone: "art/clarao.png", textos: [
       "O pulso evolui num clarão curto e enorme."
     ]}
   };
@@ -635,6 +635,7 @@
               vida: st.labareda ? 0.85 : 0.7,
               raio: st.labareda ? 13 : 8,
               largo: !!st.labareda,
+              visto: st.labareda ? "labareda" : (s.ranks.fagulha >= 3 ? "pavio" : "fagulha"),
               ja: {}
             });
           }
@@ -835,6 +836,15 @@ function pagina(api) {
     brasa: "art/brasa.png",
     fagulha: "art/fagulha.png",
     coroa: "art/coroa.png",
+    mare: "art/mare.png",
+    labareda: "art/labareda.png",
+    aureola: "art/aureola.png",
+    clarao: "art/clarao.png",
+    bruma: "art/bruma.png",
+    vidro: "art/vidro.png",
+    rastro: "art/rastro.png",
+    ima: "art/ima.png",
+    pavio: "art/pavio.png",
     poco: "art/poco.png",
     cais: "art/cais.jpg",
     marco: "art/marco.png",
@@ -1318,6 +1328,25 @@ function pagina(api) {
     }
     ctx.setTransform(escala, 0, 0, escala, canvas.width / 2 - (camX + ox) * escala, canvas.height / 2 - (camY + oy) * escala);
     if (imgs.cais) ctx.drawImage(imgs.cais, 0, 0, api.CONFIG.mundo, api.CONFIG.mundo);
+    if (imgs.mare && imgs.mare.complete && imgs.mare.naturalWidth) {
+      var cM, oxm, oym;
+      var largM = meiaLargura * 2;
+      var altM = meiaAltura * 2;
+      var propM = imgs.mare.naturalWidth / imgs.mare.naturalHeight;
+      var desenhoM = largM / propM;
+      var linhas = Math.max(2, Math.ceil(altM / desenhoM));
+      var cY;
+      for (cY = 0; cY < linhas; cY++) {
+        for (cM = 0; cM < 2; cM++) {
+          oxm = camX - meiaLargura + cM * (largM / 2) - (cY % 2) * (largM / 4);
+          oym = camY - meiaAltura + cY * desenhoM;
+          ctx.save();
+          ctx.globalAlpha = 0.95;
+          ctx.drawImage(imgs.mare, oxm, oym, largM / 2, desenhoM);
+          ctx.restore();
+        }
+      }
+    }
     var raioLuz = 158 + Math.sin(estado.t * 3) * 16;
     luz = ctx.createRadialGradient(p.x, p.y, 16, p.x, p.y, raioLuz);
     luz.addColorStop(0, "rgba(240, 170, 60, 0.22)");
@@ -1347,7 +1376,18 @@ function pagina(api) {
     }
     for (i = 0; i < estado.tiros.length; i++) {
       g = estado.tiros[i];
-      sprite(imgs.fagulha, g.x, g.y, g.largo ? 36 : 22, Math.atan2(g.vy, g.vx), 1);
+      var imgTiro = imgs.fagulha;
+      var ladoTiro = 28;
+      if (g.visto === "labareda" && imgs.labareda) {
+        imgTiro = imgs.labareda;
+        ladoTiro = 78;
+      } else if (g.visto === "pavio" && imgs.pavio) {
+        imgTiro = imgs.pavio;
+        ladoTiro = 40;
+      }
+      if (!peca(imgTiro, g.x, g.y, ladoTiro, Math.atan2(g.vy, g.vx), 1)) {
+        sprite(imgs.fagulha, g.x, g.y, g.largo ? 36 : 22, Math.atan2(g.vy, g.vx), 1);
+      }
     }
     for (i = 0; i < (estado.corpos || []).length; i++) {
       var c = estado.corpos[i];
@@ -1370,14 +1410,68 @@ function pagina(api) {
     }
     for (i = 0; i < estado.motes.length; i++) {
       var tm = 20 + Math.sin(estado.t * 8 + i) * 3;
-      sprite(imgs.coroa, estado.motes[i].x, estado.motes[i].y, tm, estado.giro, 1);
+      var imgMote = imgs.coroa;
+      var ladoMote = tm;
+      if (estado.evo && estado.evo.aureola && imgs.aureola) {
+        imgMote = imgs.aureola;
+        ladoMote = 52;
+      }
+      if (!peca(imgMote, estado.motes[i].x, estado.motes[i].y, ladoMote, 0, 1)) {
+        sprite(imgs.coroa, estado.motes[i].x, estado.motes[i].y, tm, estado.giro, 1);
+      }
+    }
+    if (estado.ranks && estado.ranks.coroa >= 3 && imgs.aureola) {
+      peca(imgs.aureola, p.x, p.y, (estado.evo && estado.evo.aureola) ? 168 : 108, 0, 0.92);
     }
     if (estado.pulsoVis > 0) {
       var anel = estado.pulsoRaio * (1.05 - estado.pulsoVis);
       var q = estado.pulsoVis / 0.26;
-      for (i = 0; i < 8; i++) {
-        var aa = (i / 8) * Math.PI * 2 + estado.giro;
-        sprite(imgs.coroa, p.x + Math.cos(aa) * anel, p.y + Math.sin(aa) * anel, 18, 0, Math.max(0, q));
+      if (estado.evo && estado.evo.clarao && imgs.clarao) {
+        peca(imgs.clarao, p.x, p.y, Math.max(220, estado.pulsoRaio * 1.8), 0, Math.max(0, q));
+      } else {
+        for (i = 0; i < 8; i++) {
+          var aa = (i / 8) * Math.PI * 2 + estado.giro;
+          sprite(imgs.coroa, p.x + Math.cos(aa) * anel, p.y + Math.sin(aa) * anel, 18, 0, Math.max(0, q));
+        }
+        if (estado.ranks && estado.ranks.pulso >= 3 && imgs.clarao) {
+          peca(imgs.clarao, p.x, p.y, 120, 0, Math.max(0, q) * 0.85);
+        }
+      }
+    }
+    var rk = estado.ranks || {};
+    var ir, ar, nr;
+    if (rk.bruma && imgs.bruma) {
+      nr = rk.bruma;
+      for (ir = 0; ir < nr; ir++) {
+        ar = (ir * Math.PI * 2) / nr;
+        peca(imgs.bruma, p.x + Math.cos(ar) * 42, p.y + Math.sin(ar) * 42, 78, 0, 0.88);
+      }
+    }
+    if (rk.vidro && imgs.vidro) {
+      nr = rk.vidro;
+      for (ir = 0; ir < nr; ir++) {
+        ar = (ir * Math.PI * 2) / nr + 0.4;
+        peca(imgs.vidro, p.x + Math.cos(ar) * 30, p.y + Math.sin(ar) * 30, 40, 0, 0.95);
+      }
+    }
+    if (rk.passo && imgs.rastro) {
+      nr = rk.passo;
+      for (ir = 0; ir < nr; ir++) {
+        peca(imgs.rastro, p.x - Math.cos(p.ang) * (22 + ir * 18), p.y - Math.sin(p.ang) * (22 + ir * 18), 32, 0, 0.9);
+      }
+    }
+    if (rk.ima && imgs.ima) {
+      nr = rk.ima;
+      for (ir = 0; ir < nr; ir++) {
+        ar = (ir * Math.PI * 2) / nr + 1.1;
+        peca(imgs.ima, p.x + Math.cos(ar) * 54, p.y + Math.sin(ar) * 54, 36, 0, 0.95);
+      }
+    }
+    if (rk.pavio && imgs.pavio) {
+      nr = rk.pavio;
+      for (ir = 0; ir < nr; ir++) {
+        ar = (ir * Math.PI * 2) / nr;
+        peca(imgs.pavio, p.x + Math.cos(p.ang) * 16 + Math.cos(ar) * 12, p.y + Math.sin(p.ang) * 16 + Math.sin(ar) * 12, 26, 0, 1);
       }
     }
     var anda = Math.sqrt((p.vx || 0) * (p.vx || 0) + (p.vy || 0) * (p.vy || 0));
