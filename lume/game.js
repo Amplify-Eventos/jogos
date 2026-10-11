@@ -849,6 +849,7 @@ function pagina(api) {
     poco: "art/poco.png",
     cais: "art/cais.jpg",
     marco: "art/marco.png",
+    farol: "art/farol.png",
     mapa: "art/mapa.jpg"
   };
 
@@ -1333,6 +1334,7 @@ function pagina(api) {
     }
     ctx.setTransform(escala, 0, 0, escala, canvas.width / 2 - (camX + ox) * escala, canvas.height / 2 - (camY + oy) * escala);
     if (imgs.cais) ctx.drawImage(imgs.cais, 0, 0, api.CONFIG.mundo, api.CONFIG.mundo);
+    peca(imgs.farol, api.CONFIG.torreX, api.CONFIG.torreY, 230, 0, 1);
     var raioLuz = 158 + Math.sin(estado.t * 3) * 16;
     luz = ctx.createRadialGradient(p.x, p.y, 16, p.x, p.y, raioLuz);
     luz.addColorStop(0, "rgba(240, 170, 60, 0.22)");
