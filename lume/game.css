@@ -213,11 +213,14 @@ h2 { font-size: 2rem; }
 
 #cartas {
   display: flex;
+  top: auto;
+  height: auto;
+  max-height: 58%;
   flex-direction: column;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: calc(0.8rem + env(safe-area-inset-top)) 1rem calc(0.8rem + env(safe-area-inset-bottom));
-  background: rgba(4, 10, 16, 0.78);
+  justify-content: flex-end;
+  gap: 0.55rem;
+  padding: 1.4rem 1rem calc(0.8rem + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(4, 10, 16, 0.94) 36%);
 }
 
 .olho {

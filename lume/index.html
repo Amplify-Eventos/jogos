@@ -5,26 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#06141c">
   <title>Lume</title>
-  <link rel="stylesheet" href="game.css?v=0.3">
+  <link rel="stylesheet" href="game.css?v=0.5">
 </head>
 <body>
   <canvas id="jogo" width="390" height="844"></canvas>
 
   <section id="titulo">
-    <img src="art/capa.jpg" alt="">
+    <img src="art/capa.jpg?v=0.5" alt="">
     <div class="painel">
       <p class="marca">Amplify</p>
       <h1>Lume</h1>
       <p>A maré de vidro sobe. A lanterna atira sozinha. História, modos, infinito e ranque. Arraste o dedo para andar.</p>
       <button id="acender" type="button" disabled>Acendendo…</button>
-      <button id="versao" type="button">0.3</button>
+      <button id="versao" type="button">0.5</button>
     </div>
   </section>
 
   <section id="versoes" hidden>
     <div class="caixa">
       <p class="marca">Versões</p>
-      <h2 id="versao-atual">0.3</h2>
+      <h2 id="versao-atual">0.5</h2>
       <ul id="lista-versoes"></ul>
       <button id="fechar-versoes" type="button">Fechar</button>
     </div>
@@ -56,10 +56,12 @@
     </div>
   </section>
 
-  <script src="game.js?v=0.3"></script>
+  <script src="game.js?v=0.5"></script>
   <script>
     (function () {
       var lista = [
+        ["0.5", "Na partida o menu não cobre a ilha."],
+        ["0.4", "A capa passou a ser o faroleiro na ilha, de cima."],
         ["0.3", "Toque na versão abre o que mudou."],
         ["0.2", "Caranguejo, gaivota e onda ganharam desenho de agir e de cair."],
         ["0.1", "Faroleiro de cima: passo, acerto na lanterna e queda."]
