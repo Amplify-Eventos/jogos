@@ -526,11 +526,18 @@ body:has(.title-screen:not([hidden])) {
 .tile.pop { animation: pop 0.16s ease forwards; }
 .tile.ember { animation: ember 0.52s ease forwards; z-index: 3; }
 .tile.vidro.ember { animation: shard-break 0.52s ease forwards; }
+.tile.hash.ember { animation: hash-crack 0.52s ease forwards; }
 .tile.jelly.ember { animation: none; }
 .tile.cover-1.ember:not(.vidro) { animation: none; }
 @keyframes shard-break {
   0%, 18% { opacity: 1; transform: rotate(8deg); }
   100% { opacity: 0; transform: translate(6px, -16px) rotate(36deg) scale(0.55); }
+}
+@keyframes hash-crack {
+  0% { opacity: 1; transform: none; }
+  22% { opacity: 1; transform: rotate(-7deg) scale(1.04); }
+  40% { opacity: 1; transform: rotate(5deg); }
+  100% { opacity: 0; transform: translateY(22px) rotate(14deg) scale(0.86); }
 }
 .tile.fresh {
   --fall: 1;
