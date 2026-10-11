@@ -1295,15 +1295,28 @@ function pagina(api) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!estado || estado.fase === "titulo") return;
     p = estado.jogador;
-    dprVista = 540;
+    dprVista = 420;
     escala = canvas.width / dprVista;
+    var meiaLargura = dprVista / 2;
+    var meiaAltura = meiaLargura * canvas.height / Math.max(1, canvas.width);
+    var camX = p.x;
+    var camY = p.y;
+    var afastaX = camX - api.CONFIG.centro;
+    var afastaY = camY - api.CONFIG.centro;
+    var afasta = Math.hypot(afastaX, afastaY);
+    var limiteCam = api.CONFIG.raioCais - Math.max(meiaLargura, meiaAltura);
+    if (limiteCam < 36) limiteCam = 36;
+    if (afasta > limiteCam) {
+      camX = api.CONFIG.centro + (afastaX / afasta) * limiteCam;
+      camY = api.CONFIG.centro + (afastaY / afasta) * limiteCam;
+    }
     ox = 0;
     oy = 0;
     if (estado.shake > 0) {
       ox = Math.sin(estado.t * 42) * estado.shake;
       oy = Math.cos(estado.t * 37) * estado.shake;
     }
-    ctx.setTransform(escala, 0, 0, escala, canvas.width / 2 - (p.x + ox) * escala, canvas.height / 2 - (p.y + oy) * escala);
+    ctx.setTransform(escala, 0, 0, escala, canvas.width / 2 - (camX + ox) * escala, canvas.height / 2 - (camY + oy) * escala);
     if (imgs.cais) ctx.drawImage(imgs.cais, 0, 0, api.CONFIG.mundo, api.CONFIG.mundo);
     var raioLuz = 158 + Math.sin(estado.t * 3) * 16;
     luz = ctx.createRadialGradient(p.x, p.y, 16, p.x, p.y, raioLuz);

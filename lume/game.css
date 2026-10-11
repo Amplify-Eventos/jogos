@@ -215,12 +215,12 @@ h2 { font-size: 2rem; }
   display: flex;
   top: auto;
   height: auto;
-  max-height: 58%;
+  max-height: 42%;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 0.55rem;
-  padding: 1.4rem 1rem calc(0.8rem + env(safe-area-inset-bottom));
-  background: linear-gradient(transparent, rgba(4, 10, 16, 0.94) 36%);
+  gap: 0.45rem;
+  padding: 1.1rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(4, 10, 16, 0.88) 42%);
 }
 
 .olho {
