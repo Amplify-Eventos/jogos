@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.8",
+    notas: [
+      "A meleca escorre quando a peça solta.",
+    ],
+  },
+  {
     nome: "1.7",
     notas: [
       "O haxixe racha e cai.",
@@ -2971,6 +2977,10 @@ function boot() {
       el.classList.add(cls);
       smoked.add(cell.r + "," + cell.c);
     };
+    order.forEach((cell) => {
+      const el = tileEl(cell);
+      if (el && el.classList.contains("lock")) el.classList.add("solta");
+    });
     order.forEach((cell) => {
       if (cell.power !== "bomb") return;
       const elBomb = tileEl(cell);

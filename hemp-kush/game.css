@@ -2038,6 +2038,11 @@ body:has(.title-screen:not([hidden])) {
   pointer-events: none;
 }
 .tile .goo svg { width: 100%; height: 100%; display: block; }
+.tile.solta .goo { animation: goo-drip 0.42s ease forwards; }
+@keyframes goo-drip {
+  0% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(18px) scale(1.2, 0.62); }
+}
 .chip .goo-mark, .mesa-item .goo-mark {
   position: relative;
   display: block;
