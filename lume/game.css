@@ -214,10 +214,13 @@ h2 { font-size: 2rem; }
 
 #fim {
   display: flex;
-  align-items: center;
+  top: auto;
+  height: auto;
+  max-height: 46%;
+  align-items: flex-end;
   justify-content: center;
-  padding: 1.2rem;
-  background: rgba(4, 10, 16, 0.8);
+  padding: 1.2rem 1.2rem calc(0.8rem + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(4, 10, 16, 0.94) 32%);
   text-align: center;
 }
 

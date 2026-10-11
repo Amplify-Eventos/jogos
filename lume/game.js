@@ -1329,7 +1329,15 @@ function pagina(api) {
     var bob = Math.sin(estado.t * (7 + anda * 0.03)) * (anda > 28 ? 3.2 : 0.8);
     var escX = 1 + Math.min(0.1, anda / 2400);
     var escYp = 1 - Math.min(0.07, anda / 3200);
-    sprite(imgs.faroleiro, p.x, p.y + bob, 64, p.ang, p.flash > 0 ? 0.6 : 1, escX, escYp);
+    if (estado.fase === "derrota" && imgs.faroleiro && imgs.faroleiro.complete) {
+      ctx.save();
+      ctx.translate(p.x, p.y + 16);
+      ctx.rotate(p.ang + Math.PI);
+      ctx.drawImage(imgs.faroleiro, -32, -32, 64, 64);
+      ctx.restore();
+    } else {
+      sprite(imgs.faroleiro, p.x, p.y + bob, 64, p.ang, p.flash > 0 ? 0.6 : 1, escX, escYp);
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (estado.fase === "jogando" || estado.fase === "carta") {
       var topo = Math.round(canvas.height * 0.06);
