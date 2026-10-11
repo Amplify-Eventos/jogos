@@ -1333,25 +1333,6 @@ function pagina(api) {
     }
     ctx.setTransform(escala, 0, 0, escala, canvas.width / 2 - (camX + ox) * escala, canvas.height / 2 - (camY + oy) * escala);
     if (imgs.cais) ctx.drawImage(imgs.cais, 0, 0, api.CONFIG.mundo, api.CONFIG.mundo);
-    if (imgs.mare && imgs.mare.complete && imgs.mare.naturalWidth) {
-      var cM, oxm, oym;
-      var largM = meiaLargura * 2;
-      var altM = meiaAltura * 2;
-      var propM = imgs.mare.naturalWidth / imgs.mare.naturalHeight;
-      var desenhoM = largM / propM;
-      var linhas = Math.max(2, Math.ceil(altM / desenhoM));
-      var cY;
-      for (cY = 0; cY < linhas; cY++) {
-        for (cM = 0; cM < 2; cM++) {
-          oxm = camX - meiaLargura + cM * (largM / 2) - (cY % 2) * (largM / 4);
-          oym = camY - meiaAltura + cY * desenhoM;
-          ctx.save();
-          ctx.globalAlpha = 0.95;
-          ctx.drawImage(imgs.mare, oxm, oym, largM / 2, desenhoM);
-          ctx.restore();
-        }
-      }
-    }
     var raioLuz = 158 + Math.sin(estado.t * 3) * 16;
     luz = ctx.createRadialGradient(p.x, p.y, 16, p.x, p.y, raioLuz);
     luz.addColorStop(0, "rgba(240, 170, 60, 0.22)");
