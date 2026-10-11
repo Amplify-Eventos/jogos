@@ -797,6 +797,7 @@ function pagina(api) {
   var opcoes = document.getElementById("opcoes");
   var fim = document.getElementById("fim");
   var fimTitulo = document.getElementById("fim-titulo");
+  var fimArte = document.getElementById("fim-arte");
   var fimTexto = document.getElementById("fim-texto");
   var fimStats = document.getElementById("fim-stats");
   var acender = document.getElementById("acender");
@@ -853,8 +854,18 @@ function pagina(api) {
 
   function criarAudio() {
     var ctxA = null;
-    var drone = null;
-    var extra = null;
+    var lanterna = new Audio("art/lanterna.wav");
+    var mare = new Audio("art/mare.wav");
+    var estalo = new Audio("art/estalo.wav");
+    var somVitoria = new Audio("art/vitoria.wav");
+    var somDerrota = new Audio("art/derrota.wav");
+    lanterna.loop = true;
+    mare.loop = true;
+    lanterna.volume = 0.22;
+    mare.volume = 0.3;
+    estalo.volume = 0.38;
+    somVitoria.volume = 0.5;
+    somDerrota.volume = 0.55;
     function ac() {
       var C = window.AudioContext || window.webkitAudioContext;
       if (!C) return null;
@@ -862,68 +873,61 @@ function pagina(api) {
       if (ctxA.state === "suspended") ctxA.resume();
       return ctxA;
     }
-    function bip(freq, quando, dur, tipo, vol) {
-      var c = ac();
-      var o, g, t0;
-      if (!c) return;
-      t0 = c.currentTime + quando;
-      o = c.createOscillator();
-      g = c.createGain();
-      o.type = tipo;
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(vol, t0);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-      o.connect(g);
-      g.connect(c.destination);
-      o.start(t0);
-      o.stop(t0 + dur + 0.02);
+    function soltar(el) {
+      var p;
+      try { p = el.play(); } catch (e) { return; }
+      if (p && p.then) p.then(function () {
+        el.pause();
+        try { el.currentTime = 0; } catch (e2) {}
+      }, function () {});
+    }
+    function calar(el) {
+      try { el.pause(); } catch (e) {}
+    }
+    function um(el) {
+      try { el.currentTime = 0; } catch (e) {}
+      var p = el.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+    function loop(el) {
+      um(el);
     }
     return {
-      desbloquear: ac,
+      desbloquear: function () {
+        ac();
+        soltar(lanterna);
+        soltar(mare);
+        soltar(estalo);
+        soltar(somVitoria);
+        soltar(somDerrota);
+      },
       tocar: function (ev) {
-        if (ev === "tiro") bip(680, 0, 0.045, "square", 0.025);
-        else if (ev === "dano") bip(96, 0, 0.13, "sawtooth", 0.045);
-        else if (ev === "brasa") bip(920, 0, 0.04, "sine", 0.028);
-        else if (ev === "pulso") bip(160, 0, 0.16, "sine", 0.04);
-        else if (ev === "nivel") {
-          bip(523, 0, 0.08, "sine", 0.05);
-          bip(659, 0.07, 0.1, "sine", 0.05);
-          bip(784, 0.14, 0.16, "sine", 0.05);
-        } else if (ev === "vitoria") {
-          bip(523, 0, 0.18, "sine", 0.06);
-          bip(659, 0.12, 0.22, "sine", 0.06);
-          bip(784, 0.24, 0.42, "sine", 0.07);
+        if (ev === "tiro") um(estalo);
+        else if (ev === "vitoria") {
+          calar(lanterna);
+          calar(mare);
+          um(somVitoria);
         } else if (ev === "derrota") {
-          bip(311, 0, 0.18, "triangle", 0.05);
-          bip(220, 0.16, 0.28, "triangle", 0.05);
-          bip(130, 0.32, 0.4, "sine", 0.05);
+          calar(lanterna);
+          calar(mare);
+          um(somDerrota);
         } else if (ev === "ambiente") {
-          var c = ac();
-          var g1, g2;
-          if (!c || drone) return;
-          drone = c.createOscillator();
-          extra = c.createOscillator();
-          g1 = c.createGain();
-          g2 = c.createGain();
-          drone.type = "sine";
-          drone.frequency.value = 73;
-          g1.gain.value = 0.014;
-          extra.type = "triangle";
-          extra.frequency.value = 110;
-          g2.gain.value = 0.007;
-          drone.connect(g1);
-          g1.connect(c.destination);
-          extra.connect(g2);
-          g2.connect(c.destination);
-          drone.start();
-          extra.start();
+          calar(somVitoria);
+          calar(somDerrota);
+          loop(lanterna);
+          loop(mare);
         }
       },
+      calarAmbiente: function () {
+        calar(lanterna);
+        calar(mare);
+      },
       parar: function () {
-        try { if (drone) drone.stop(); } catch (e) {}
-        try { if (extra) extra.stop(); } catch (e2) {}
-        drone = null;
-        extra = null;
+        calar(lanterna);
+        calar(mare);
+        calar(estalo);
+        calar(somVitoria);
+        calar(somDerrota);
       }
     };
   }
@@ -1256,7 +1260,8 @@ function pagina(api) {
     cartas.hidden = estado.fase !== "carta";
     if (acabou && !somFim) {
       somFim = true;
-      audio.parar();
+      audio.calarAmbiente();
+      if (fimArte) fimArte.src = estado.fase === "vitoria" ? "art/vitoria.jpg" : "art/derrota.jpg";
       fimTitulo.textContent = estado.fase === "vitoria"
         ? (estado.modo === "tempo" ? "O farol reacendeu" : estado.nomeFase + " fechou")
         : "A lanterna apagou";
