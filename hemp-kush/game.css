@@ -527,6 +527,7 @@ body:has(.title-screen:not([hidden])) {
 .tile.ember { animation: ember 0.52s ease forwards; z-index: 3; }
 .tile.vidro.ember { animation: shard-break 0.52s ease forwards; }
 .tile.jelly.ember { animation: none; }
+.tile.cover-1.ember:not(.vidro) { animation: none; }
 @keyframes shard-break {
   0%, 18% { opacity: 1; transform: rotate(8deg); }
   100% { opacity: 0; transform: translate(6px, -16px) rotate(36deg) scale(0.55); }
@@ -2504,6 +2505,12 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   0% { opacity: 1; transform: none; }
   45% { opacity: 1; transform: scale(1.22); }
   100% { opacity: 0; transform: scale(1.4) translateY(10px); }
+}
+.board .tile.cover-1.ember img.leaf { animation: leaf-off 0.52s ease forwards; }
+.board .tile.cover-1.ember:not(.jelly) img:not(.leaf):not(.bag) { animation: ember 0.52s ease forwards; }
+@keyframes leaf-off {
+  0% { opacity: 0.72; transform: none; }
+  100% { opacity: 0; transform: translate(22px, -8px) rotate(16deg) scale(0.86); }
 }
 .chip {
   display: inline-flex;
