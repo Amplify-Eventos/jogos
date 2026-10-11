@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#120c09">
+  <title>Quebra</title>
+  <link rel="stylesheet" href="game.css?v=0.1">
+</head>
+<body>
+  <img class="rua" src="art/rua.jpg" alt="">
+
+  <section id="titulo">
+    <div class="painel">
+      <p class="marca">Rua</p>
+      <h1>Quebra</h1>
+      <p>Kadu Laje contra Nilo Brasa. Dois nomes inventados. Soco, chute ou guarda.</p>
+      <button id="jogar" type="button">Lutar</button>
+      <button id="versao" type="button">0.1</button>
+    </div>
+  </section>
+
+  <section id="luta" hidden>
+    <div class="placar">
+      <div>
+        <strong>Kadu</strong>
+        <div class="barra"><span id="vida-kadu"></span></div>
+      </div>
+      <div>
+        <strong>Nilo</strong>
+        <div class="barra"><span id="vida-nilo"></span></div>
+      </div>
+    </div>
+    <p id="fala"></p>
+    <div class="ringue">
+      <img id="kadu" src="art/kadu.jpg" alt="">
+      <img id="nilo" src="art/nilo.jpg" alt="">
+    </div>
+    <div class="dedo">
+      <button id="soco" type="button">Soco</button>
+      <button id="chute" type="button">Chute</button>
+      <button id="guarda" type="button">Guarda</button>
+    </div>
+  </section>
+
+  <section id="fim" hidden>
+    <div class="painel">
+      <h2 id="fim-titulo"></h2>
+      <p id="fim-texto"></p>
+      <button id="de-novo" type="button">De novo</button>
+    </div>
+  </section>
+
+  <section id="versoes" hidden>
+    <div class="painel">
+      <p class="marca">Versões</p>
+      <ul>
+        <li>0.1 — A luta abre. Kadu e Nilo, inventados. Dá para ganhar e perder.</li>
+      </ul>
+      <button id="fechar-versoes" type="button">Fechar</button>
+    </div>
+  </section>
+
+  <script src="game.js?v=0.1"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #120c09;
+  color: #f6efe4;
+  font: 18px/1.35 Georgia, serif;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+}
+.rua {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+}
+button {
+  font: inherit;
+  color: #f6efe4;
+  background: #2a140d;
+  border: 1px solid #e0a23a;
+  border-radius: 999px;
+  min-height: 52px;
+  padding: 0.6rem 1rem;
+}
+.marca {
+  margin: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font: 12px/1 system-ui, sans-serif;
+  color: #e0b15a;
+}
+h1, h2 { font-weight: normal; margin: 0.15rem 0 0.4rem; }
+h1 { font-size: 3rem; }
+#titulo, #fim, #versoes {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+}
+#titulo[hidden], #luta[hidden], #fim[hidden], #versoes[hidden] { display: none; }
+.painel {
+  width: min(24rem, 100%);
+  margin: 0 auto;
+  padding: 1.2rem 1.1rem calc(1rem + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(8, 4, 3, 0.94) 28%);
+}
+#jogar, #de-novo, #fechar-versoes { width: min(100%, 20rem); }
+#versao {
+  display: block;
+  margin-top: 0.7rem;
+  min-height: 36px;
+  background: transparent;
+  font: 14px/1 system-ui, sans-serif;
+}
+#luta {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+}
+.placar {
+  display: flex;
+  gap: 0.8rem;
+  padding: calc(0.6rem + env(safe-area-inset-top)) 0.8rem 0;
+}
+.placar > div { flex: 1; }
+.placar strong { font: 14px/1 system-ui, sans-serif; }
+.barra {
+  height: 8px;
+  margin-top: 0.35rem;
+  background: rgba(246, 239, 228, 0.25);
+}
+.barra span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #e0a23a;
+}
+#fala {
+  min-height: 1.4em;
+  margin: 0.4rem 0.8rem;
+  text-align: center;
+}
+.ringue {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 0.4rem;
+}
+.ringue img {
+  width: min(42vw, 210px);
+  height: min(46vh, 360px);
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55));
+  transition: transform 0.12s ease;
+}
+.ringue img.bate { transform: translateX(18px) scale(1.04); }
+.ringue img.toma { transform: translateX(10px); filter: brightness(1.6) drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55)); }
+#nilo.bate { transform: translateX(-18px) scale(1.04); }
+.dedo {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.6rem 0.7rem calc(0.7rem + env(safe-area-inset-bottom));
+}
+.dedo button { flex: 1; }
+#versoes { background: rgba(8, 4, 3, 0.72); }
+#versoes .painel {
+  background: #1a100c;
+  border: 1px solid #e0a23a;
+  border-radius: 16px;
+  margin-bottom: calc(0.8rem + env(safe-area-inset-bottom));
+}
+#versoes ul { margin: 0 0 1rem; padding: 0; list-style: none; }
+#versoes li { padding: 0.55rem 0; }

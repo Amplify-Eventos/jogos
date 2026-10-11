@@ -8,5 +8,10 @@
     "nome": "Hemp Kush",
     "slug": "hemp-kush",
     "capa": "hemp-kush/art/loja-recebe.jpg"
+  },
+  {
+    "nome": "Quebra",
+    "slug": "quebra",
+    "capa": "quebra/art/capa.jpg"
   }
 ]
