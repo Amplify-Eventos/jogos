@@ -1347,7 +1347,7 @@ function pagina(api) {
       var angE = e.tipo === "vaga" ? estado.t * 0.35 : e.ang;
       var agir = null;
       if (e.tipo === "gaivota" && e.impulso > 0) agir = imgs.gaivotaAgir;
-      else if (e.tipo === "caranguejo" && dist(e.x, e.y, p.x, p.y) < p.raio + e.raio + 36) agir = imgs.caranguejoAgir;
+      else if (e.tipo === "caranguejo" && Math.hypot(e.x - p.x, e.y - p.y) < p.raio + e.raio + 36) agir = imgs.caranguejoAgir;
       else if (e.tipo === "onda" && e.pocoEm > 2.2) agir = imgs.ondaAgir;
       if (agir && peca(agir, e.x, e.y, e.desenho, e.ang, e.flash > 0 ? 0.55 : 1)) continue;
       if (e.tipo === "gaivota") escY = 1 + Math.sin(estado.t * 16 + e.id) * 0.16;
