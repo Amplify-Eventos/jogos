@@ -5,26 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#06141c">
   <title>Lume</title>
-  <link rel="stylesheet" href="game.css?v=1.4">
+  <link rel="stylesheet" href="game.css?v=1.5">
 </head>
 <body>
   <canvas id="jogo" width="390" height="844"></canvas>
 
   <section id="titulo">
-    <img src="art/capa.jpg?v=1.4" alt="">
+    <img src="art/capa.jpg?v=1.5" alt="">
     <div class="painel">
       <p class="marca">Amplify</p>
       <h1>Lume</h1>
       <p>A maré de vidro sobe. A lanterna atira sozinha. História, modos, infinito e ranque. Arraste o dedo para andar.</p>
       <button id="acender" type="button" disabled>Acendendo…</button>
-      <button id="versao" type="button">1.4</button>
+      <button id="versao" type="button">1.5</button>
     </div>
   </section>
 
   <section id="versoes" hidden>
     <div class="caixa">
       <p class="marca">Versões</p>
-      <h2 id="versao-atual">1.4</h2>
+      <h2 id="versao-atual">1.5</h2>
       <ul id="lista-versoes"></ul>
       <button id="fechar-versoes" type="button">Fechar</button>
     </div>
@@ -57,10 +57,11 @@
     </div>
   </section>
 
-  <script src="game.js?v=1.4"></script>
+  <script src="game.js?v=1.5"></script>
   <script>
     (function () {
       var lista = [
+        ["1.5", "O mapa deixou o painel de 70%. A escolha ficou na faixa do polegar."],
         ["1.4", "Caranguejo, gaivota e onda entraram na vista do cais. O descanso não entra num quadrado."],
         ["1.3", "O faroleiro entrou na tinta do cais."],
         ["1.2", "A lâmpada do farol, de cima, entrou na partida."],
