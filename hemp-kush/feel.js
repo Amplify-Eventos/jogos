@@ -235,6 +235,7 @@ const Feel = (() => {
     if (power === "row" || power === "col") dot.classList.add("fino-bit");
     if (power === "wrap") dot.classList.add("bomba-bit");
     if (power === "pipe") dot.classList.add("pipe-bit");
+    if (power === "bomb") dot.classList.add("bong-bit");
     dot.style.left = box.x + "px";
     dot.style.top = box.y + "px";
     if (flor) {
