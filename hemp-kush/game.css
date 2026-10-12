@@ -2920,6 +2920,14 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .gem-b { width: 26px; height: 30px; left: 0; top: 30px; transform: rotate(-16deg); }
 .hire-demo .gem-c { width: 24px; height: 26px; left: 40px; top: 34px; transform: rotate(18deg); }
 .hire-demo .match-gone { animation: hash-cut 1.1s ease forwards; }
+.hire-demo .crumble-row .join-a { --join: 56px; animation: match-join 1.1s ease forwards; }
+.hire-demo .crumble-row .join-b { --join: 0px; animation: match-join 1.1s ease forwards; }
+.hire-demo .crumble-row .join-c { --join: -56px; animation: match-join 1.1s ease forwards; }
+@keyframes match-join {
+  0%, 18% { opacity: 1; transform: none; filter: none; }
+  55% { opacity: 1; transform: translateX(var(--join, 0px)) scale(1.12); filter: brightness(1.4); }
+  100% { opacity: 0; transform: translateX(var(--join, 0px)) scale(0.2); filter: brightness(1.7); }
+}
 .hire-demo .crumble-stay { animation: crumble-hold 1.15s ease forwards; }
 .hire-demo .crumble-shatter .gem-a { animation: crumble-split-a 1.15s ease forwards; }
 .hire-demo .crumble-shatter .gem-b { animation: crumble-split-b 1.15s ease forwards; }

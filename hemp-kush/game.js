@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.16",
+    notas: [
+      "Na cena do crumble, o match junta as flores.",
+    ],
+  },
+  {
     nome: "1.15",
     notas: [
       "Na cena da folha, a flor estoura.",
@@ -3558,7 +3564,7 @@ function boot() {
     }
     if (kind === "preso") {
       box.hidden = false;
-      box.innerHTML = '<div class="crumble-row"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><img class="match-gone" alt="" src="art/verde.png" draggable="false"><span class="crumble-gems crumble-stay"><span class="tile vidro gem-one">' + cristalHtml() + "</span></span></div>";
+      box.innerHTML = '<div class="crumble-row"><img class="match-gone join-a" alt="" src="art/verde.png" draggable="false"><img class="match-gone join-b" alt="" src="art/verde.png" draggable="false"><img class="match-gone join-c" alt="" src="art/verde.png" draggable="false"><span class="crumble-gems crumble-stay"><span class="tile vidro gem-one">' + cristalHtml() + "</span></span></div>";
       return;
     }
     if (kind === "quebra") {
