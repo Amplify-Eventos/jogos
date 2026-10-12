@@ -2830,7 +2830,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   z-index: 2;
   animation: seed-fall 1.15s ease forwards;
 }
-.hire-demo .seed-clear { animation: seed-clear 1.15s ease forwards; }
+.hire-demo .seed-clear { animation: ember 1.15s ease forwards; }
 @keyframes seed-fall {
   0%, 18% { transform: translateY(0) scale(1); opacity: 1; }
   48% { transform: translateY(var(--seed-step)) scale(1); opacity: 1; }
@@ -2841,7 +2841,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   48%, 100% { opacity: 0; }
 }
 .feel-still .hire-demo .seed-drop { animation: none; transform: translateY(var(--seed-step)); opacity: 0; }
-.feel-still .hire-demo .seed-clear { animation: none; opacity: 0; }
+.feel-still .hire-demo .seed-clear { animation: none; opacity: 0; transform: scale(0.15); }
 .hire.folha-in .hire-shop { object-position: center 28%; }
 .hire-demo .leaf-hold {
   position: relative;
