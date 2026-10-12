@@ -2801,6 +2801,9 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .rosin-film.peel,
 .hire-demo .rosin-hold .goo.peel { animation: film-peel 1.1s ease forwards; }
 .hire-demo .rosin-hold.gone > img:first-child { animation: hash-cut 1.1s ease forwards; }
+.hire-demo .rosin-buddy.join-a { --join: 82px; animation: match-join 1.1s ease forwards; }
+.hire-demo .rosin-buddy.join-c { --join: -82px; animation: match-join 1.1s ease forwards; }
+.hire-demo .rosin-hold.gone > img.flor-burst { animation: ember 1.1s ease forwards; }
 @keyframes film-peel {
   0%, 28% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(18px) scale(1.2, 0.62); }
@@ -2808,6 +2811,9 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .feel-still .hire-demo .rosin-film.peel,
 .feel-still .hire-demo .rosin-hold .goo.peel { animation: none; opacity: 0; }
 .feel-still .hire-demo .rosin-hold.gone > img:first-child { animation: none; opacity: 0; }
+.feel-still .hire-demo .rosin-buddy.join-a,
+.feel-still .hire-demo .rosin-buddy.join-c { animation: none; opacity: 0; }
+.feel-still .hire-demo .rosin-hold.gone > img.flor-burst { animation: none; opacity: 0; transform: scale(0.15); }
 .hire.semente-in .hire-shop { object-position: center 30%; }
 .hire-demo .seed-col {
   --seed-step: 52px;

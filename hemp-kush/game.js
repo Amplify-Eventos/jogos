@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.19",
+    notas: [
+      "Na cena do rosin, o match junta as flores.",
+    ],
+  },
+  {
     nome: "1.18",
     notas: [
       "Na cena da semente, as flores estouram.",
@@ -3551,7 +3557,7 @@ function boot() {
     }
     if (kind === "solta") {
       box.hidden = false;
-      box.innerHTML = '<img class="rosin-buddy cut-away" alt="" src="art/verde.png" draggable="false"><span class="rosin-hold gone"><img alt="" src="art/verde.png" draggable="false">' + gooHtml(false, "peel") + '</span><img class="rosin-buddy cut-away" alt="" src="art/verde.png" draggable="false">';
+      box.innerHTML = '<img class="rosin-buddy cut-away join-a" alt="" src="art/verde.png" draggable="false"><span class="rosin-hold gone"><img class="flor-burst" alt="" src="art/verde.png" draggable="false">' + gooHtml(false, "peel") + '</span><img class="rosin-buddy cut-away join-c" alt="" src="art/verde.png" draggable="false">';
       return;
     }
     if (kind === "parada") {
