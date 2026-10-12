@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.17",
+    notas: [
+      "Na cena do haxixe, o match junta as flores.",
+    ],
+  },
+  {
     nome: "1.16",
     notas: [
       "Na cena do crumble, o match junta as flores.",
@@ -3529,7 +3535,7 @@ function boot() {
     }
     if (kind === "cut") {
       box.hidden = false;
-      box.innerHTML = '<img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away hash-fall" alt="" src="art/bloco.png" draggable="false">';
+      box.innerHTML = '<div class="hash-row"><img class="cut-away join-a" alt="" src="art/verde.png" draggable="false"><img class="cut-away join-b" alt="" src="art/verde.png" draggable="false"><img class="cut-away join-c" alt="" src="art/verde.png" draggable="false"></div><img class="cut-away hash-fall" alt="" src="art/bloco.png" draggable="false">';
       return;
     }
     if (kind === "film") {

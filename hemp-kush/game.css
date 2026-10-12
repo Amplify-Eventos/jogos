@@ -2923,6 +2923,13 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .crumble-row .join-a { --join: 56px; animation: match-join 1.1s ease forwards; }
 .hire-demo .crumble-row .join-b { --join: 0px; animation: match-join 1.1s ease forwards; }
 .hire-demo .crumble-row .join-c { --join: -56px; animation: match-join 1.1s ease forwards; }
+.hire-demo .hash-row { display: flex; align-items: flex-end; gap: 10px; }
+.hire-demo .hash-row .join-a { --join: 62px; animation: match-join 1.1s ease forwards; }
+.hire-demo .hash-row .join-b { --join: 0px; animation: match-join 1.1s ease forwards; }
+.hire-demo .hash-row .join-c { --join: -62px; animation: match-join 1.1s ease forwards; }
+.feel-still .hire-demo .hash-row .join-a,
+.feel-still .hire-demo .hash-row .join-b,
+.feel-still .hire-demo .hash-row .join-c { animation: none; opacity: 0; }
 @keyframes match-join {
   0%, 18% { opacity: 1; transform: none; filter: none; }
   55% { opacity: 1; transform: translateX(var(--join, 0px)) scale(1.12); filter: brightness(1.4); }
