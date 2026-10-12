@@ -1194,6 +1194,7 @@ body:has(.title-screen:not([hidden])) {
   top: 2%;
   width: 42%;
   height: 46%;
+  animation: leaf-off 0.42s ease forwards;
 }
 .fx-bit.jelly {
   display: grid;
@@ -1274,6 +1275,11 @@ body:has(.title-screen:not([hidden])) {
 @keyframes bong-bit {
   0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   100% { transform: translate(-50%, calc(-50% - 36px)) scale(0.86); opacity: 0; }
+}
+.fx-bit.folha-bit { animation: folha-bit 0.42s ease forwards; }
+@keyframes folha-bit {
+  0%, 18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + 22px), calc(-50% - 8px)) rotate(16deg) scale(0.86); }
 }
 .fx-fly {
   position: fixed;
