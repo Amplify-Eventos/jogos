@@ -1037,6 +1037,7 @@ body:has(.title-screen:not([hidden])) {
 .tile.power-row.born { animation: bolo-row 0.5s ease forwards; }
 .tile.power-col.born { animation: bolo-col 0.5s ease forwards; }
 .tile.power-wrap.born, .tile.power-pipe.born { animation: bolo-grosso 0.5s ease forwards; }
+.tile.power-bomb.born { animation: bong-born 0.5s ease forwards; }
 .tile.roll, .tile.roll-col, .tile.cherry { z-index: 4; }
 .tile.roll { animation: roll-smoke 0.72s ease forwards; animation-delay: calc(var(--lit, 0) * 70ms); }
 .tile.roll-col { animation: roll-col 0.72s ease forwards; animation-delay: calc(var(--lit, 0) * 70ms); }
@@ -2434,6 +2435,11 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   0% { transform: scale(0.55); filter: brightness(1.8); }
   70% { transform: scale(1.12); }
   100% { transform: none; }
+}
+@keyframes bong-born {
+  0% { transform: translateY(18px) scale(0.72); opacity: 0; }
+  55% { transform: translateY(0) scale(1.06); opacity: 1; }
+  100% { transform: none; opacity: 1; }
 }
 @keyframes bolo-row {
   0% { transform: scale(0.22, 1.45); }
