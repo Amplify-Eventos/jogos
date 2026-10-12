@@ -1247,6 +1247,11 @@ body:has(.title-screen:not([hidden])) {
   40% { opacity: 1; transform: translate(-50%, -50%) rotate(5deg); }
   100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + 22px)) rotate(14deg) scale(0.86); }
 }
+.fx-bit.vidro-bit { animation: vidro-bit 0.42s ease forwards; }
+@keyframes vidro-bit {
+  0%, 18% { opacity: 1; transform: translate(-50%, -50%) rotate(8deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + 6px), calc(-50% - 16px)) rotate(36deg) scale(0.55); }
+}
 .fx-fly {
   position: fixed;
   z-index: 6;

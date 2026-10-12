@@ -212,7 +212,7 @@ const Feel = (() => {
       if (!gem) return;
       bits += 1;
       const dot = document.createElement("i");
-      dot.className = "fx-bit";
+      dot.className = "fx-bit vidro-bit";
       dot.style.left = box.x + "px";
       dot.style.top = box.y + "px";
       dot.appendChild(gem.cloneNode(true));
