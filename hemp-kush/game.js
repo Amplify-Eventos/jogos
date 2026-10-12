@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.18",
+    notas: [
+      "Na cena da semente, as flores estouram.",
+    ],
+  },
+  {
     nome: "1.17",
     notas: [
       "Na cena do haxixe, o match junta as flores.",

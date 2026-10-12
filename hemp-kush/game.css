@@ -2920,6 +2920,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .gem-b { width: 26px; height: 30px; left: 0; top: 30px; transform: rotate(-16deg); }
 .hire-demo .gem-c { width: 24px; height: 26px; left: 40px; top: 34px; transform: rotate(18deg); }
 .hire-demo .match-gone { animation: hash-cut 1.1s ease forwards; }
+.hire-demo .seed-col .match-gone { animation: ember 1.1s ease forwards; }
 .hire-demo .crumble-row .join-a { --join: 56px; animation: match-join 1.1s ease forwards; }
 .hire-demo .crumble-row .join-b { --join: 0px; animation: match-join 1.1s ease forwards; }
 .hire-demo .crumble-row .join-c { --join: -56px; animation: match-join 1.1s ease forwards; }
@@ -2963,6 +2964,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   100% { transform: translateX(14px) scale(0.7); opacity: 0; }
 }
 .feel-still .hire-demo .match-gone { animation: none; opacity: 0; }
+.feel-still .hire-demo .seed-col .match-gone { animation: none; opacity: 0; transform: scale(0.15); }
 .feel-still .hire-demo .crumble-stay { animation: none; }
 .feel-still .hire-demo .crumble-shatter .gem-one { animation: none; opacity: 0; }
 .feel-still .hire-demo .power-in { animation: none; opacity: 0; }
