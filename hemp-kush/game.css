@@ -2965,15 +2965,15 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
   100% { opacity: 0; transform: translate(16px, 10px) rotate(48deg) scale(0.5); }
 }
 @keyframes crumble-hit {
-  0%, 20% { transform: translateX(-10px) scale(1); opacity: 1; }
-  48% { transform: translateX(14px) scale(1.08); opacity: 1; }
-  100% { transform: translateX(14px) scale(0.7); opacity: 0; }
+  0%, 16% { transform: translateX(-10px) scale(1); filter: none; opacity: 1; }
+  40% { transform: translateX(14px) scale(1.06); filter: sepia(0.85) saturate(2.4) brightness(1.55); opacity: 1; }
+  100% { transform: translateX(14px) scale(0.76); filter: sepia(1) brightness(0.4); opacity: 0; }
 }
 .feel-still .hire-demo .match-gone { animation: none; opacity: 0; }
 .feel-still .hire-demo .seed-col .match-gone { animation: none; opacity: 0; transform: scale(0.15); }
 .feel-still .hire-demo .crumble-stay { animation: none; }
 .feel-still .hire-demo .crumble-shatter .gem-one { animation: none; opacity: 0; }
-.feel-still .hire-demo .power-in { animation: none; opacity: 0; }
+.feel-still .hire-demo .power-in { animation: none; opacity: 0; transform: translateX(14px) scale(0.76); filter: sepia(1) brightness(0.4); }
 
 body:has(#screen-play:not([hidden])) {
   height: 100svh;
