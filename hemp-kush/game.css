@@ -2749,6 +2749,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .hash-grow .hash-bud { animation: hash-lose 0.7s ease forwards; }
 .hire-demo .hash-born { animation: hash-sprout 0.7s ease forwards; }
 .hire-demo .cut-away { animation: hash-cut 1.1s ease forwards; }
+.hire-demo .cut-away.hash-fall { animation: hash-crack 1.1s ease forwards; }
 @keyframes hash-lose {
   0% { opacity: 1; }
   100% { opacity: 0; }
@@ -2764,6 +2765,7 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .feel-still .hire-demo .hash-grow .hash-bud { animation: none; opacity: 0; }
 .feel-still .hire-demo .hash-born { animation: none; opacity: 1; transform: none; }
 .feel-still .hire-demo .cut-away { animation: none; opacity: 0; }
+.feel-still .hire-demo .cut-away.hash-fall { animation: none; opacity: 0; transform: translateY(22px) rotate(14deg) scale(0.86); }
 .hire-demo .rosin-buddy,
 .hire-demo .rosin-hold,
 .hire-demo .rosin-hold img {

@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.14",
+    notas: [
+      "Na cena do haxixe, o bloco racha e cai.",
+    ],
+  },
+  {
     nome: "1.13",
     notas: [
       "Na cena da folha, o corte encolhe e depois a folha sai.",
@@ -3511,7 +3517,7 @@ function boot() {
     }
     if (kind === "cut") {
       box.hidden = false;
-      box.innerHTML = '<img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/bloco.png" draggable="false">';
+      box.innerHTML = '<img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="cut-away hash-fall" alt="" src="art/bloco.png" draggable="false">';
       return;
     }
     if (kind === "film") {
