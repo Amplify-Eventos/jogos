@@ -1240,6 +1240,13 @@ body:has(.title-screen:not([hidden])) {
   42% { transform: translate(calc(-50% + var(--dx) * 0.45), calc(-50% + var(--dy) * 0.45)) scale(1.28); filter: brightness(1.55); opacity: 1; }
   100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15); filter: brightness(1.8); opacity: 0; }
 }
+.fx-bit.hash-bit { animation: hash-bit 0.42s ease forwards; }
+@keyframes hash-bit {
+  0% { opacity: 1; transform: translate(-50%, -50%); }
+  22% { opacity: 1; transform: translate(-50%, -50%) rotate(-7deg) scale(1.04); }
+  40% { opacity: 1; transform: translate(-50%, -50%) rotate(5deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + 22px)) rotate(14deg) scale(0.86); }
+}
 .fx-fly {
   position: fixed;
   z-index: 6;
