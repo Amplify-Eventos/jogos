@@ -1234,6 +1234,12 @@ body:has(.title-screen:not([hidden])) {
   from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.45); opacity: 0; }
 }
+.fx-bit.flor-bit { animation: flor-bit 0.42s ease forwards; }
+@keyframes flor-bit {
+  0% { transform: translate(-50%, -50%) scale(1); filter: none; opacity: 1; }
+  42% { transform: translate(calc(-50% + var(--dx) * 0.45), calc(-50% + var(--dy) * 0.45)) scale(1.28); filter: brightness(1.55); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15); filter: brightness(1.8); opacity: 0; }
+}
 .fx-fly {
   position: fixed;
   z-index: 6;

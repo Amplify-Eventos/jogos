@@ -230,6 +230,7 @@ const Feel = (() => {
     bits += 1;
     const dot = document.createElement("i");
     dot.className = "fx-bit" + (flor ? " bong-par" : "");
+    if (!power && !flor && (kind === "verde" || kind === "roxo" || kind === "ambar" || kind === "rosa" || kind === "azul" || kind === "branco" || kind === "bud" || kind === "flor")) dot.classList.add("flor-bit");
     dot.style.left = box.x + "px";
     dot.style.top = box.y + "px";
     if (flor) {
