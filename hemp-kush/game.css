@@ -1207,6 +1207,7 @@ body:has(.title-screen:not([hidden])) {
   width: 92%;
   height: 96%;
   z-index: 0;
+  animation: bag-open 0.42s ease forwards;
 }
 .fx-bit.jelly img:not(.bag):not(.leaf):not(.prep) {
   width: 70%;
