@@ -2822,9 +2822,9 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 }
 .hire-demo .seed-clear { animation: seed-clear 1.15s ease forwards; }
 @keyframes seed-fall {
-  0%, 18% { transform: translateY(0); opacity: 1; }
-  48% { transform: translateY(var(--seed-step)); opacity: 1; }
-  100% { transform: translateY(var(--seed-step)); opacity: 0; }
+  0%, 18% { transform: translateY(0) scale(1); opacity: 1; }
+  48% { transform: translateY(var(--seed-step)) scale(1); opacity: 1; }
+  100% { transform: translateY(calc(var(--seed-step) + 18px)) scale(0.5); opacity: 0; }
 }
 @keyframes seed-clear {
   0%, 22% { opacity: 1; }
