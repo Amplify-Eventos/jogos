@@ -233,6 +233,7 @@ const Feel = (() => {
     if (!power && !flor && (kind === "verde" || kind === "roxo" || kind === "ambar" || kind === "rosa" || kind === "azul" || kind === "branco" || kind === "bud" || kind === "flor")) dot.classList.add("flor-bit");
     if (kind === "hash" || kind === "bloco") dot.classList.add("hash-bit");
     if (power === "row" || power === "col") dot.classList.add("fino-bit");
+    if (power === "wrap") dot.classList.add("bomba-bit");
     dot.style.left = box.x + "px";
     dot.style.top = box.y + "px";
     if (flor) {
