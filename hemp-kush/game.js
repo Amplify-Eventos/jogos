@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.15",
+    notas: [
+      "Na cena da folha, a flor estoura.",
+    ],
+  },
+  {
     nome: "1.14",
     notas: [
       "Na cena do haxixe, o bloco racha e cai.",
@@ -3547,7 +3553,7 @@ function boot() {
     }
     if (kind === "colhe") {
       box.hidden = false;
-      box.innerHTML = '<span class="leaf-hold wide"><img class="cut-away" alt="" src="art/verde.png" draggable="false"><img class="leaf-on harvest" alt="" src="art/folha.png" draggable="false"></span>';
+      box.innerHTML = '<span class="leaf-hold wide"><img class="cut-away flor-burst" alt="" src="art/verde.png" draggable="false"><img class="leaf-on harvest" alt="" src="art/folha.png" draggable="false"></span>';
       return;
     }
     if (kind === "preso") {
