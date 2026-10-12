@@ -1391,9 +1391,10 @@ function pagina(api) {
       else if (e.tipo === "caranguejo" && Math.hypot(e.x - p.x, e.y - p.y) < p.raio + e.raio + 36) agir = imgs.caranguejoAgir;
       else if (e.tipo === "onda" && e.pocoEm > 2.2) agir = imgs.ondaAgir;
       if (agir && peca(agir, e.x, e.y, e.desenho, e.ang, e.flash > 0 ? 0.55 : 1)) continue;
-      if (e.tipo === "gaivota") escY = 1 + Math.sin(estado.t * 16 + e.id) * 0.16;
-      if (e.tipo === "caranguejo") angE += Math.sin(estado.t * 11 + e.id) * 0.18;
-      if (e.tipo === "onda") angE += Math.sin(estado.t * 2 + e.id) * 0.25;
+      if (e.tipo === "caranguejo" || e.tipo === "gaivota" || e.tipo === "onda") {
+        peca(imgs[e.tipo], e.x, e.y, e.desenho, e.ang, e.flash > 0 ? 0.55 : 1);
+        continue;
+      }
       sprite(imgs[e.tipo], e.x, e.y + Math.sin(estado.t * 7 + e.id) * 2, e.desenho, angE, e.flash > 0 ? 0.55 : 1, 1, escY);
     }
     for (i = 0; i < estado.motes.length; i++) {
