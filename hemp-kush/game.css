@@ -2859,15 +2859,15 @@ body:not(.feel-still) .pin-node:not(.locked) { animation: node-idle 3s ease-in-o
 .hire-demo .leaf-on.nick { animation: leaf-nick 1.15s ease forwards; }
 .hire-demo .leaf-on.harvest { animation: leaf-harvest 1.2s ease forwards; }
 @keyframes leaf-nick {
-  0%, 30% { opacity: 0.72; transform: none; }
-  100% { opacity: 0.72; transform: rotate(-14deg) scale(1.05); }
+  0%, 24% { opacity: 1; transform: scale(1.29); }
+  100% { opacity: 0.72; transform: scale(1); }
 }
 @keyframes leaf-harvest {
-  0%, 22% { opacity: 0.72; transform: rotate(-14deg) scale(1.05); }
-  100% { opacity: 0; transform: translate(74px, -6px) rotate(16deg) scale(0.86); }
+  0%, 18% { opacity: 0.72; transform: scale(1); }
+  100% { opacity: 0; transform: translate(22px, -8px) rotate(16deg) scale(0.86); }
 }
-.feel-still .hire-demo .leaf-on.nick { animation: none; opacity: 0.72; transform: rotate(-14deg) scale(1.05); }
-.feel-still .hire-demo .leaf-on.harvest { animation: none; opacity: 0; transform: translate(74px, -6px) rotate(16deg) scale(0.86); }
+.feel-still .hire-demo .leaf-on.nick { animation: none; opacity: 0.72; transform: scale(1); }
+.feel-still .hire-demo .leaf-on.harvest { animation: none; opacity: 0; transform: translate(22px, -8px) rotate(16deg) scale(0.86); }
 .hire.crumble-in .hire-shop { object-position: center 24%; }
 .hire.balcao-in .hire-shop { object-position: center center; }
 .hire.cliente-in .hire-shop { object-position: center center; }
