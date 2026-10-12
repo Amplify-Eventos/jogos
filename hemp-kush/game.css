@@ -1252,6 +1252,12 @@ body:has(.title-screen:not([hidden])) {
   0%, 18% { opacity: 1; transform: translate(-50%, -50%) rotate(8deg); }
   100% { opacity: 0; transform: translate(calc(-50% + 6px), calc(-50% - 16px)) rotate(36deg) scale(0.55); }
 }
+.fx-bit.fino-bit { animation: fino-bit 0.42s ease forwards; }
+@keyframes fino-bit {
+  0% { transform: translate(-50%, -50%) scale(1); filter: none; opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1.06); filter: sepia(0.85) saturate(2.4) brightness(1.55); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.76); filter: sepia(1) brightness(0.4); opacity: 0; }
+}
 .fx-fly {
   position: fixed;
   z-index: 6;
