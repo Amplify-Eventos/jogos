@@ -290,7 +290,11 @@ const Feel = (() => {
     const dy = to.top + to.height / 2 - box.pageY;
     if (chip.animate && !still()) {
       chip.animate(
-        [{ transform: "translate(-50%, -50%) scale(1)", opacity: 1 }, { transform: "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px)) scale(0.55)", opacity: 0.15 }],
+        [
+          { transform: "translate(-50%, -50%) scale(1)", opacity: 1, filter: "none" },
+          { transform: "translate(calc(-50% + " + (dx * 0.65) + "px), calc(-50% + " + (dy * 0.65) + "px)) scale(1.18)", opacity: 1, filter: "brightness(1.45)", offset: 0.65 },
+          { transform: "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px)) scale(0.9)", opacity: 0, filter: "brightness(1.6)" },
+        ],
         { duration: 380, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" },
       );
     }
