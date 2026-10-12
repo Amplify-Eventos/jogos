@@ -1173,6 +1173,7 @@ body:has(.title-screen:not([hidden])) {
   height: 56%;
   z-index: 2;
   pointer-events: none;
+  animation: goo-drip 0.42s ease forwards;
 }
 .fx-bit .goo svg {
   width: 100%;

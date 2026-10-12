@@ -1467,6 +1467,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = HempKush;
 
 const VERSOES = [
   {
+    nome: "1.32",
+    notas: [
+      "O pedaço da meleca escorre.",
+    ],
+  },
+  {
     nome: "1.31",
     notas: [
       "O pedaço do ziplok abre.",
