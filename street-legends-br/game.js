@@ -246,6 +246,7 @@ function zerar(rig) {
   rig.corpo.rotation.set(0, 0, 0);
   rig.corpo.position.set(0, 0, 0);
   rig.hips.position.y = 0.96;
+  rig.torso.position.y = 0.32;
   rig.torso.rotation.set(0, 0, 0);
   rig.cabeca.rotation.set(0, 0, 0);
   [rig.bracoL, rig.bracoR].forEach((braco) => {
@@ -327,15 +328,13 @@ function posar(rig, f, agora) {
     let k = 1;
     if (s === "queda") k = Math.min(1, f.t / 0.28);
     if (s === "levanta") k = 1 - Math.min(1, f.t / 0.45);
-    rig.hips.position.y = 0.96 - 0.62 * k;
-    rig.torso.rotation.x = 0.75 * k;
-    rig.cabeca.rotation.x = -0.35 * k;
-    rig.pernaL.quadril.rotation.x = -1.2 * k;
-    rig.pernaR.quadril.rotation.x = -1.2 * k;
-    rig.pernaL.joelho.rotation.x = 1.35 * k;
-    rig.pernaR.joelho.rotation.x = 1.35 * k;
-    rig.bracoL.ombro.rotation.x = 0.5 * k;
-    rig.bracoR.ombro.rotation.x = 0.7 * k;
+    rig.corpo.rotation.x = (Math.PI / 2) * k;
+    rig.corpo.position.y = 0.2 * k;
+    rig.corpo.position.z = -0.9 * k;
+    rig.bracoL.ombro.rotation.set(0.05, 0, 0.4);
+    rig.bracoR.ombro.rotation.set(0.05, 0, -0.4);
+    rig.bracoL.cotovelo.rotation.set(0.12, 0, 0);
+    rig.bracoR.cotovelo.rotation.set(0.12, 0, 0);
   }
   const golpe = GOLPES[s];
   const noMeio = golpe && f.t >= golpe.startup && f.t < golpe.startup + golpe.active;
@@ -589,9 +588,20 @@ usar(ELENCO[0], ELENCO[1]);
 tamanho();
 requestAnimationFrame(quadro);
 
+function medida(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const caixa = new THREE.Box3().setFromObject(rig.g);
+  return {
+    minX: caixa.min.x, maxX: caixa.max.x,
+    minY: caixa.min.y, maxY: caixa.max.y,
+    minZ: caixa.min.z, maxZ: caixa.max.z
+  };
+}
+
 window.STREET = {
   renderer,
   get luta() { return luta; },
   comecar,
+  medida,
   escolher(id) { escolhido = id; marcarCarta(); }
 };
