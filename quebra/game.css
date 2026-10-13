@@ -107,6 +107,10 @@ h1 { font-size: 3rem; }
   width: min(56vw, 280px);
   height: min(46vh, 360px);
 }
+.ringue img.chute {
+  width: min(70vw, 340px);
+  height: min(46vh, 360px);
+}
 .ringue img.queda {
   width: min(64vh, 440px);
   height: auto;

@@ -14,8 +14,8 @@
   var imgKadu = document.getElementById("kadu");
   var imgNilo = document.getElementById("nilo");
   var pose = {
-    kadu: { parado: "art/kadu.png", soco: "art/kadu-soco.png", queda: "art/kadu-queda.png" },
-    nilo: { parado: "art/nilo.png", soco: "art/nilo-soco.png", queda: "art/nilo-queda.png" }
+    kadu: { parado: "art/kadu.png", soco: "art/kadu-soco.png", chute: "art/kadu-chute.png", queda: "art/kadu-queda.png" },
+    nilo: { parado: "art/nilo.png", soco: "art/nilo-soco.png", chute: "art/nilo-chute.png", queda: "art/nilo-queda.png" }
   };
   var volta = { kadu: 0, nilo: 0 };
 
@@ -47,7 +47,7 @@
   function mostrar(quem, qual) {
     var img = imgDe(quem);
     img.src = pose[quem][qual];
-    img.classList.remove("soco", "queda", "bate", "toma");
+    img.classList.remove("soco", "chute", "queda", "bate", "toma");
     if (qual !== "parado") img.classList.add(qual);
   }
 
@@ -87,9 +87,9 @@
     var quanto = dano(tipo, alvo.guarda > agora ? 1 : 0);
     alvo.hp -= quanto;
     fala.textContent = (de === "kadu" ? "Kadu" : "Nilo") + " — " + tipo + ".";
-    if (tipo === "soco") {
-      mostrar(de, "soco");
-      volta[de] = agora + 320;
+    if (tipo === "soco" || tipo === "chute") {
+      mostrar(de, tipo);
+      volta[de] = agora + (tipo === "chute" ? 460 : 320);
     } else {
       pulso(imgDe(de), "bate");
     }
