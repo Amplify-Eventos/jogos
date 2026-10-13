@@ -162,7 +162,7 @@ function boneco(dados) {
     joelho.add(solaPe);
     quadril.add(joelho);
     hips.add(quadril);
-    return { quadril, joelho };
+    return { quadril, joelho, pe: solaPe };
   }
 
   const bracoL = braco(-1);
@@ -295,6 +295,8 @@ function zerar(rig) {
     braco.ombro.rotation.set(0.25, 0, 0);
     braco.cotovelo.rotation.set(0.5, 0, 0);
   });
+  rig.pernaL.quadril.position.set(-0.11 * largo, -0.02, 0);
+  rig.pernaR.quadril.position.set(0.11 * largo, -0.02, 0);
   [rig.pernaL, rig.pernaR].forEach((perna) => {
     perna.quadril.rotation.set(0, 0, 0);
     perna.joelho.rotation.set(0, 0, 0);
@@ -343,9 +345,13 @@ function posar(rig, f, agora) {
     if (s === "rajada") rig.bracoL.ombro.rotation.x = -1.1 * u;
   }
   if (s === "chute") {
-    rig.pernaR.quadril.rotation.x = -1.55 * u;
-    rig.pernaR.joelho.rotation.x = 0.25 * (1 - u);
-    rig.torso.rotation.x = -0.35 * u;
+    rig.pernaR.quadril.position.x = 0.05;
+    rig.pernaR.quadril.position.z = 0.12 * u;
+    rig.pernaR.quadril.rotation.x = -1.35 * u;
+    rig.pernaR.joelho.rotation.x = 0.15 * (1 - u);
+    rig.torso.rotation.x = -0.28 * u;
+    rig.bracoL.ombro.rotation.x = -0.55 * u;
+    rig.bracoR.ombro.rotation.x = 0.35 * u;
   }
   if (s === "agarra") {
     rig.bracoL.ombro.rotation.x = -1.4 * u;
@@ -654,13 +660,23 @@ usar(ELENCO[0], ELENCO[1]);
 tamanho();
 requestAnimationFrame(quadro);
 
-function mao(quem) {
+function pontoDe(quem, osso) {
   const rig = quem === "b" ? rigB : rigA;
   const outro = luta && (quem === "b" ? luta.a : luta.b);
   const p = new THREE.Vector3();
-  rig.bracoR.mao.getWorldPosition(p);
+  osso.getWorldPosition(p);
   const d = outro ? Math.hypot(p.x - outro.x, p.z - outro.z) : 0;
   return { x: p.x, y: p.y, z: p.z, d };
+}
+
+function mao(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  return pontoDe(quem, rig.bracoR.mao);
+}
+
+function pe(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  return pontoDe(quem, rig.pernaR.pe);
 }
 
 function medida(quem) {
@@ -679,5 +695,6 @@ window.STREET = {
   comecar,
   medida,
   mao,
+  pe,
   escolher(id) { escolhido = id; marcarCarta(); }
 };
