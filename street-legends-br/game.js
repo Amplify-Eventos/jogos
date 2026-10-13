@@ -119,9 +119,39 @@ function boneco(dados) {
     { y: -0.14, rx: 0.17 * largo, rz: 0.11, oz: 0.01 },
     { y: 0.04, rx: 0.22 * largo, rz: 0.14, oz: 0.02 },
     { y: 0.2, rx: 0.26 * largo, rz: 0.13 }
-  ], roupa, 8), "peito");
+  ], dados.regata ? pele : roupa, 8), "peito");
   peito.position.y = 0.14;
   torso.add(peito);
+  if (dados.jaqueta) {
+    peito.userData.traje = "jaqueta";
+    const gola = solido([
+      { y: 0, rx: 0.1, rz: 0.075 },
+      { y: 0.07, rx: 0.12, rz: 0.085 }
+    ], cor("#2c3424", 0.8), 6);
+    gola.position.set(0, 0.34, 0);
+    gola.userData.traje = "jaqueta";
+    torso.add(gola);
+    const ziper = malha(new THREE.BoxGeometry(0.028, 0.3, 0.02), cor("#e7e0d4", 0.45));
+    ziper.position.set(0, 0.12, 0.16);
+    ziper.userData.traje = "jaqueta";
+    torso.add(ziper);
+  }
+  if (dados.regata) {
+    const regata = solido([
+      { y: -0.2, rx: 0.11 * largo, rz: 0.1, oz: 0.02 },
+      { y: 0.02, rx: 0.14 * largo, rz: 0.12, oz: 0.035 },
+      { y: 0.16, rx: 0.1 * largo, rz: 0.09, oz: 0.02 }
+    ], roupa, 6);
+    regata.position.y = 0.12;
+    regata.userData.traje = "regata";
+    torso.add(regata);
+    [-1, 1].forEach((lado) => {
+      const alca = malha(new THREE.BoxGeometry(0.045, 0.14, 0.03), roupa);
+      alca.position.set(lado * 0.1 * largo, 0.32, 0.05);
+      alca.userData.traje = "regata";
+      torso.add(alca);
+    });
+  }
   const pescoco = solido([
     { y: -0.14, rx: 0.075, rz: 0.065 },
     { y: 0.12, rx: 0.06, rz: 0.055 }
@@ -156,11 +186,13 @@ function boneco(dados) {
   ], pele, 4);
   nariz.position.set(0, -0.03, 0.12);
   nariz.rotation.x = 1.1;
+  nariz.userData.parte = "rosto";
   cabeca.add(nariz);
   if (dados.careca) {
     const sobrancelha = malha(new THREE.BoxGeometry(0.14, 0.018, 0.016), cabeloMat);
     sobrancelha.position.set(0, 0.06, 0.12);
     cabeca.add(sobrancelha);
+    cranio.userData.traje = "careca";
   } else {
     const pelo = solido([
       { y: 0, rx: 0.15, rz: 0.14 },
@@ -168,6 +200,7 @@ function boneco(dados) {
       { y: 0.11, rx: 0.08, rz: 0.07 }
     ], cabeloMat, 8);
     pelo.position.y = 0.05;
+    pelo.userData.traje = "cabelo";
     cabeca.add(pelo);
     const brinco = malha(new THREE.BoxGeometry(0.012, 0.04, 0.012), cor("#e0b15a", 0.35));
     brinco.position.set(-0.15, -0.05, 0.02);
@@ -236,8 +269,15 @@ function boneco(dados) {
     ], calca, 6), "canela");
     canela.position.y = -0.18;
     joelho.add(canela);
-    const cabedal = malha(new THREE.BoxGeometry(0.12, 0.07, 0.18), tenis);
-    cabedal.position.set(0, -0.36, 0.02);
+    const cabedal = malha(new THREE.BoxGeometry(dados.jaqueta ? 0.14 : 0.11, dados.jaqueta ? 0.08 : 0.06, dados.jaqueta ? 0.24 : 0.16), tenis);
+    cabedal.position.set(0, -0.35, dados.jaqueta ? 0.05 : 0.02);
+    if (dados.jaqueta) {
+      cabedal.userData.traje = "tenis";
+      const faixa = malha(new THREE.BoxGeometry(0.142, 0.018, 0.1), cor("#1c1a17", 0.55));
+      faixa.position.set(0, 0.02, 0.02);
+      faixa.userData.traje = "tenis";
+      cabedal.add(faixa);
+    }
     joelho.add(cabedal);
     const solaPe = malha(new THREE.BoxGeometry(0.13, 0.04, 0.28), sola);
     solaPe.position.set(0, -0.4, 0.05);
@@ -258,7 +298,7 @@ function boneco(dados) {
   anel.rotation.x = -Math.PI / 2;
   anel.position.y = 0.02;
   g.add(anel);
-  return { g, corpo, hips, torso, cabeca, bracoL, bracoR, pernaL, pernaR, anel, largo, flash: 0 };
+  return { g, corpo, hips, torso, cabeca, nariz, bracoL, bracoR, pernaL, pernaR, anel, largo, careca: !!dados.careca, flash: 0 };
 }
 
 function pintar(rig, claro) {
@@ -508,10 +548,22 @@ function avancar(rig, f, outro) {
   rig.g.position.z += (dz / dist) * passo;
 }
 
+function virarRosto(rig, f, outro) {
+  if (!outro || !rig.cabeca) return;
+  const dx = outro.x - f.x;
+  const dz = outro.z - f.z;
+  if (dx * dx + dz * dz < 0.04) return;
+  let diff = Math.atan2(dx, dz) - f.yaw - rig.torso.rotation.y;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  rig.cabeca.rotation.y = Math.max(-1.05, Math.min(1.05, diff));
+}
+
 function colocar(rig, f, outro, agora) {
   rig.g.position.set(f.x, 0, f.z);
   rig.g.rotation.y = f.yaw;
   posar(rig, f, agora);
+  virarRosto(rig, f, outro);
   avancar(rig, f, outro);
   if (rig.flash > 0) {
     pintar(rig, true);
@@ -793,6 +845,27 @@ function dobra(quem) {
   };
 }
 
+function traje(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const marcas = [];
+  rig.g.traverse((obj) => {
+    if (obj.userData && obj.userData.traje && !marcas.includes(obj.userData.traje)) marcas.push(obj.userData.traje);
+  });
+  return { marcas, careca: !!rig.careca };
+}
+
+function rosto(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const outro = luta ? (quem === "b" ? luta.a : luta.b) : null;
+  const nariz = new THREE.Vector3();
+  const nuca = new THREE.Vector3();
+  rig.nariz.getWorldPosition(nariz);
+  rig.cabeca.getWorldPosition(nuca);
+  const dNariz = outro ? Math.hypot(nariz.x - outro.x, nariz.z - outro.z) : 0;
+  const dCabeca = outro ? Math.hypot(nuca.x - outro.x, nuca.z - outro.z) : 0;
+  return { dNariz, dCabeca, olha: dNariz < dCabeca - 0.02 };
+}
+
 function mao(quem) {
   const rig = quem === "b" ? rigB : rigA;
   return pontoDe(quem, rig.bracoR.mao);
@@ -822,5 +895,7 @@ window.STREET = {
   pe,
   silhueta,
   dobra,
+  traje,
+  rosto,
   escolher(id) { escolhido = id; marcarCarta(); }
 };

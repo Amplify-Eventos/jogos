@@ -9,6 +9,7 @@ export const ELENCO = [
     calca: "#243044",
     tenis: "#d7d2c8",
     cabelo: "#2a211c",
+    jaqueta: true,
     ajuste: { soco: 1.12, chute: 1, agarra: 1, rajada: 1, ombro: 1, velocidade: 1.06 }
   },
   {
@@ -22,6 +23,7 @@ export const ELENCO = [
     tenis: "#c8c2b4",
     cabelo: "#1a1412",
     careca: true,
+    regata: true,
     ajuste: { soco: 1, chute: 1.16, agarra: 1.08, rajada: 1, ombro: 1.2, velocidade: 0.98 }
   }
 ];
