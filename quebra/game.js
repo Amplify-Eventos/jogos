@@ -18,6 +18,7 @@
     nilo: { parado: "art/nilo.png", soco: "art/nilo-soco.png", chute: "art/nilo-chute.png", queda: "art/nilo-queda.png" }
   };
   var volta = { kadu: 0, nilo: 0 };
+  var fila = [];
 
   function dano(golpe, guarda) {
     if (golpe === "soco") return guarda > 0 ? 3 : 10;
@@ -47,8 +48,29 @@
   function mostrar(quem, qual) {
     var img = imgDe(quem);
     img.src = pose[quem][qual];
-    img.classList.remove("soco", "chute", "queda", "bate", "toma");
+    img.classList.remove("soco", "chute", "queda", "bate", "toma", "vai", "recua");
     if (qual !== "parado") img.classList.add(qual);
+  }
+
+  function atravessa(de, tipo) {
+    mostrar(de, tipo);
+    var atacante = imgDe(de);
+    var outro = de === "kadu" ? imgNilo : imgKadu;
+    outro.classList.remove("recua", "toma", "bate");
+    void atacante.offsetWidth;
+    void outro.offsetWidth;
+    atacante.classList.add("vai");
+    outro.classList.add("recua");
+  }
+
+  function aplicar(item) {
+    if (fase !== "luta") return;
+    var alvo = item.alvo === "kadu" ? kadu : nilo;
+    var guarda = alvo.guarda > item.quando ? 1 : 0;
+    alvo.hp -= dano(item.tipo, guarda);
+    pintar();
+    var fimDe = acabou();
+    if (fimDe) fechar(fimDe);
   }
 
   function acabou() {
@@ -61,6 +83,7 @@
     fase = qual;
     volta.kadu = 0;
     volta.nilo = 0;
+    fila = [];
     mostrar(qual === "vitoria" ? "nilo" : "kadu", "queda");
     luta.classList.add("acabou");
     fim.hidden = false;
@@ -83,21 +106,13 @@
       }
       return;
     }
-    var alvo = de === "kadu" ? nilo : kadu;
-    var quanto = dano(tipo, alvo.guarda > agora ? 1 : 0);
-    alvo.hp -= quanto;
+    var alvoNome = de === "kadu" ? "nilo" : "kadu";
+    var longo = tipo === "chute";
     fala.textContent = (de === "kadu" ? "Kadu" : "Nilo") + " — " + tipo + ".";
-    if (tipo === "soco" || tipo === "chute") {
-      mostrar(de, tipo);
-      volta[de] = agora + (tipo === "chute" ? 460 : 320);
-    } else {
-      pulso(imgDe(de), "bate");
-    }
-    pulso(de === "kadu" ? imgNilo : imgKadu, "toma");
-    if (de === "kadu") trava = agora + (tipo === "chute" ? 520 : 340);
-    pintar();
-    var fimDe = acabou();
-    if (fimDe) fechar(fimDe);
+    atravessa(de, tipo);
+    fila.push({ tipo: tipo, alvo: alvoNome, quando: agora + (longo ? 280 : 190) });
+    volta[de] = agora + (longo ? 660 : 500);
+    if (de === "kadu") trava = agora + (longo ? 520 : 340);
   }
 
   function comecar() {
@@ -114,6 +129,7 @@
     luta.hidden = false;
     volta.kadu = 0;
     volta.nilo = 0;
+    fila = [];
     mostrar("kadu", "parado");
     mostrar("nilo", "parado");
     fala.textContent = "A rua é essa.";
@@ -121,6 +137,15 @@
   }
 
   function repor(agora) {
+    var i = 0;
+    while (i < fila.length) {
+      if (agora >= fila[i].quando) {
+        var item = fila.splice(i, 1)[0];
+        if (fase === "luta") aplicar(item);
+      } else {
+        i += 1;
+      }
+    }
     if (fase !== "luta") return;
     if (volta.kadu && agora >= volta.kadu) {
       volta.kadu = 0;
