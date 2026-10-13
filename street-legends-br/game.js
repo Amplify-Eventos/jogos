@@ -462,15 +462,15 @@ function posar(rig, f, agora) {
   }
   if (s === "hit") {
     const k = pesoDoAcerto(f.t, f.stun);
-    rig.hips.position.y = 0.96 - 0.14 * k;
-    rig.torso.rotation.x = 0.95 * k;
-    rig.cabeca.rotation.x = 0.5 * k;
-    rig.pernaL.joelho.rotation.x = 0.75 * k;
-    rig.pernaR.joelho.rotation.x = 0.75 * k;
-    rig.bracoL.ombro.rotation.x = 0.85 * k;
-    rig.bracoR.ombro.rotation.x = 0.85 * k;
-    rig.bracoL.cotovelo.rotation.x = 0.9 * k;
-    rig.bracoR.cotovelo.rotation.x = 0.9 * k;
+    rig.hips.position.y = 0.96 - 0.08 * k;
+    rig.torso.rotation.x = 0.62 * k;
+    rig.cabeca.rotation.x = 0.28 * k;
+    rig.pernaL.joelho.rotation.x = 0.45 * k;
+    rig.pernaR.joelho.rotation.x = 0.45 * k;
+    rig.bracoL.ombro.rotation.set(-0.9 * k, 0, 0.55 * k);
+    rig.bracoR.ombro.rotation.set(-0.9 * k, 0, -0.55 * k);
+    rig.bracoL.cotovelo.rotation.x = 1.15 * k;
+    rig.bracoR.cotovelo.rotation.x = 1.15 * k;
   }
   if (s === "queda" || s === "ko" || s === "levanta") {
     let k = 1;
@@ -787,7 +787,9 @@ function dobra(quem) {
     k: pesoDoAcerto(f ? f.t : 0, f ? f.stun : 0.52),
     torso: rig.torso.rotation.x,
     joelho: rig.pernaR.joelho.rotation.x,
-    hips: rig.hips.position.y
+    hips: rig.hips.position.y,
+    frente: rig.bracoL.ombro.rotation.x,
+    braco: rig.bracoL.ombro.rotation.z
   };
 }
 
