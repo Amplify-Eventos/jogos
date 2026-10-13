@@ -41,65 +41,102 @@ let stickY = 0;
 let audio = null;
 let ultimoSom = null;
 
-function cor(hex) {
-  return new THREE.MeshLambertMaterial({ color: hex });
+function cor(hex, rugoso) {
+  return new THREE.MeshStandardMaterial({ color: hex, roughness: rugoso === undefined ? 0.62 : rugoso, metalness: 0 });
 }
 
-function caixa(w, h, d, material) {
-  const malha = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-  malha.userData.base = material.color.getHex();
-  return malha;
+function malha(geo, material) {
+  const m = new THREE.Mesh(geo, material);
+  m.userData.base = material.color.getHex();
+  if (m.material.emissive) m.material.emissive.setHex(0x000000);
+  return m;
+}
+
+function cilindro(raioA, raioB, altura, material) {
+  const m = malha(new THREE.CylinderGeometry(raioA, raioB, altura, 10), material);
+  return m;
 }
 
 function boneco(dados) {
   const g = new THREE.Group();
   const corpo = new THREE.Group();
   g.add(corpo);
-  const pele = cor(dados.pele);
-  const roupa = cor(dados.roupa);
-  const calca = cor(dados.calca);
-  const tenis = cor(dados.tenis);
-  const cabelo = cor(dados.cabelo || "#241c18");
+  const pele = cor(dados.pele, 0.48);
+  const roupa = cor(dados.roupa, 0.72);
+  const calca = cor(dados.calca, 0.78);
+  const tenis = cor(dados.tenis, 0.45);
+  const sola = cor("#2a241c", 0.8);
+  const cabeloMat = cor(dados.cabelo || "#241c18", 0.7);
+  const olhoMat = cor("#1c140f", 0.3);
+  const largo = dados.careca ? 1.12 : 1;
 
   const hips = new THREE.Group();
   hips.position.y = 0.96;
-  hips.add(caixa(0.42, 0.26, 0.24, calca));
+  const pelvis = cilindro(0.16 * largo, 0.18 * largo, 0.22, calca);
+  hips.add(pelvis);
   corpo.add(hips);
 
   const torso = new THREE.Group();
-  torso.position.y = 0.32;
-  const peito = caixa(0.52, 0.5, 0.28, roupa);
-  peito.position.y = 0.22;
+  torso.position.y = 0.28;
+  const peito = malha(new THREE.BoxGeometry(0.46 * largo, 0.42, 0.24), roupa);
+  peito.position.y = 0.24;
   torso.add(peito);
+  const camisa = malha(new THREE.BoxGeometry(0.16, 0.28, 0.04), cor(dados.careca ? "#6a241c" : "#f4efe6", 0.55));
+  camisa.position.set(0, 0.2, 0.13);
+  torso.add(camisa);
+  const pescoco = cilindro(0.07, 0.08, 0.1, pele);
+  pescoco.position.y = 0.5;
+  torso.add(pescoco);
+
   const cabeca = new THREE.Group();
-  cabeca.position.y = 0.56;
-  const cranio = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 12), pele);
-  cranio.scale.set(1, 1.12, 1);
-  cranio.userData.base = pele.color.getHex();
+  cabeca.position.y = 0.66;
+  const cranio = malha(new THREE.SphereGeometry(0.17, 16, 14), pele);
+  cranio.scale.set(1, 1.08, 0.96);
   cabeca.add(cranio);
-  if (!dados.careca) {
-    const pelo = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 10), cabelo);
-    pelo.scale.set(1.02, 0.72, 1.05);
+  [-1, 1].forEach((lado) => {
+    const olho = malha(new THREE.SphereGeometry(0.026, 8, 6), olhoMat);
+    olho.position.set(lado * 0.055, 0.02, 0.145);
+    cabeca.add(olho);
+  });
+  const nariz = malha(new THREE.SphereGeometry(0.03, 8, 6), pele);
+  nariz.position.set(0, -0.02, 0.155);
+  nariz.scale.set(0.8, 0.7, 1);
+  cabeca.add(nariz);
+  if (dados.careca) {
+    const sobrancelha = malha(new THREE.BoxGeometry(0.14, 0.02, 0.02), cabeloMat);
+    sobrancelha.position.set(0, 0.07, 0.15);
+    cabeca.add(sobrancelha);
+  } else {
+    const pelo = malha(new THREE.SphereGeometry(0.18, 14, 12), cabeloMat);
+    pelo.scale.set(1.05, 0.62, 1.02);
     pelo.position.y = 0.08;
-    pelo.userData.base = cabelo.color.getHex();
     cabeca.add(pelo);
+    const brinco = malha(new THREE.TorusGeometry(0.02, 0.006, 6, 8), cor("#e0b15a", 0.35));
+    brinco.position.set(-0.16, -0.04, 0.02);
+    brinco.rotation.y = Math.PI / 2;
+    cabeca.add(brinco);
   }
   torso.add(cabeca);
   hips.add(torso);
 
   function braco(lado) {
     const ombro = new THREE.Group();
-    ombro.position.set(lado * 0.34, 0.4, 0);
-    const cima = caixa(0.13, 0.34, 0.13, roupa);
+    ombro.position.set(lado * 0.3 * largo, 0.4, 0);
+    const junta = malha(new THREE.SphereGeometry(0.07, 10, 8), dados.careca ? pele : roupa);
+    ombro.add(junta);
+    const manga = dados.careca ? pele : roupa;
+    const cima = cilindro(0.07, 0.06, 0.3, manga);
     cima.position.y = -0.18;
     ombro.add(cima);
     const cotovelo = new THREE.Group();
-    cotovelo.position.y = -0.34;
-    const ante = caixa(0.12, 0.3, 0.12, pele);
-    ante.position.y = -0.16;
+    cotovelo.position.y = -0.32;
+    const ante = cilindro(0.055, 0.048, 0.28, pele);
+    ante.position.y = -0.15;
     cotovelo.add(ante);
-    const mao = caixa(0.13, 0.13, 0.14, pele);
-    mao.position.y = -0.34;
+    const mao = malha(new THREE.SphereGeometry(0.065, 10, 8), pele.clone());
+    mao.scale.set(0.9, 0.75, 1.15);
+    mao.position.y = -0.32;
+    mao.userData.base = pele.color.getHex();
     cotovelo.add(mao);
     ombro.add(cotovelo);
     torso.add(ombro);
@@ -108,18 +145,21 @@ function boneco(dados) {
 
   function perna(lado) {
     const quadril = new THREE.Group();
-    quadril.position.set(lado * 0.14, -0.08, 0);
-    const coxa = caixa(0.16, 0.4, 0.16, calca);
-    coxa.position.y = -0.22;
+    quadril.position.set(lado * 0.11 * largo, -0.02, 0);
+    const coxa = cilindro(0.09, 0.07, 0.38, calca);
+    coxa.position.y = -0.2;
     quadril.add(coxa);
     const joelho = new THREE.Group();
-    joelho.position.y = -0.42;
-    const canela = caixa(0.14, 0.38, 0.14, calca);
-    canela.position.y = -0.2;
+    joelho.position.y = -0.4;
+    const canela = cilindro(0.06, 0.048, 0.36, calca);
+    canela.position.y = -0.18;
     joelho.add(canela);
-    const pe = caixa(0.16, 0.08, 0.28, tenis);
-    pe.position.set(0, -0.42, 0.06);
-    joelho.add(pe);
+    const cabedal = malha(new THREE.BoxGeometry(0.12, 0.07, 0.18), tenis);
+    cabedal.position.set(0, -0.36, 0.02);
+    joelho.add(cabedal);
+    const solaPe = malha(new THREE.BoxGeometry(0.13, 0.04, 0.28), sola);
+    solaPe.position.set(0, -0.4, 0.05);
+    joelho.add(solaPe);
     quadril.add(joelho);
     hips.add(quadril);
     return { quadril, joelho };
@@ -130,8 +170,8 @@ function boneco(dados) {
   const pernaL = perna(-1);
   const pernaR = perna(1);
   const anel = new THREE.Mesh(
-    new THREE.RingGeometry(0.42, 0.52, 20),
-    new THREE.MeshBasicMaterial({ color: dados.roupa, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+    new THREE.RingGeometry(0.38, 0.46, 24),
+    new THREE.MeshBasicMaterial({ color: dados.roupa, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
   );
   anel.rotation.x = -Math.PI / 2;
   anel.position.y = 0.02;
@@ -141,9 +181,8 @@ function boneco(dados) {
 
 function pintar(rig, claro) {
   rig.g.traverse((obj) => {
-    if (!obj.material || obj.material.userData === undefined) return;
-    if (!obj.userData || obj.userData.base === undefined) return;
-    obj.material.color.setHex(claro ? 0xf4f0e8 : obj.userData.base);
+    if (!obj.material || !obj.material.emissive) return;
+    obj.material.emissive.setHex(claro ? 0x5a3a28 : 0x000000);
   });
 }
 
@@ -195,8 +234,8 @@ function texturaMuro() {
 }
 
 function arena() {
-  cena.add(new THREE.AmbientLight(0xc5d0dc, 0.72));
-  const lua = new THREE.DirectionalLight(0xd5e2f2, 1.15);
+  cena.add(new THREE.AmbientLight(0xd5dde8, 1.05));
+  const lua = new THREE.DirectionalLight(0xe7eef8, 1.45);
   lua.position.set(-4, 8, 2);
   cena.add(lua);
   const poste = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 3.2, 8), cor("#2a241c"));
@@ -338,8 +377,8 @@ function posar(rig, f, agora) {
   }
   const golpe = GOLPES[s];
   const noMeio = golpe && f.t >= golpe.startup && f.t < golpe.startup + golpe.active;
-  const mao = s === "chute" ? rig.pernaR.joelho : rig.bracoR.mao;
-  if (mao && mao.material) mao.material.color.setHex(noMeio ? 0xf2d7b0 : mao.userData.base);
+  const mao = s === "chute" ? null : rig.bracoR.mao;
+  if (mao && mao.material && mao.material.emissive) mao.material.emissive.setHex(noMeio ? 0x6a4228 : 0x000000);
 }
 
 function colocar(rig, f, agora) {
@@ -356,16 +395,18 @@ function colocar(rig, f, agora) {
 function enquadrar(dt) {
   const a = luta ? luta.a : { x: -1.6, z: 0, yaw: Math.PI / 2 };
   const b = luta ? luta.b : { x: 1.6, z: 0 };
-  const dist = 5.8;
-  let cx = a.x - Math.sin(a.yaw) * dist;
-  let cz = a.z - Math.cos(a.yaw) * dist;
+  const dist = 4.8;
+  const fx = Math.sin(a.yaw);
+  const fz = Math.cos(a.yaw);
+  let cx = a.x - fx * dist + fz * 1.7;
+  let cz = a.z - fz * dist - fx * 1.7;
   cx = Math.max(-5.4, Math.min(5.4, cx));
   cz = Math.max(-5.4, Math.min(5.4, cz));
   const treme = tremer > 0 ? (Math.random() - 0.5) * 0.12 : 0;
-  camDesejada.set(cx + treme, 4.4, cz + treme);
+  camDesejada.set(cx + treme, 2.7, cz + treme);
   const t = 1 - Math.pow(0.012, dt || 0.016);
   camera.position.lerp(camDesejada, t);
-  olhar.set((a.x + b.x) / 2, 1.05, (a.z + b.z) / 2);
+  olhar.set((a.x + b.x) / 2, 1.15, (a.z + b.z) / 2);
   camera.lookAt(olhar);
   if (tremer > 0) tremer = Math.max(0, tremer - dt);
 }
