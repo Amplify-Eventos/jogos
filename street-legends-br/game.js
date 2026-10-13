@@ -176,7 +176,7 @@ function boneco(dados) {
   anel.rotation.x = -Math.PI / 2;
   anel.position.y = 0.02;
   g.add(anel);
-  return { g, corpo, hips, torso, cabeca, bracoL, bracoR, pernaL, pernaR, anel, flash: 0 };
+  return { g, corpo, hips, torso, cabeca, bracoL, bracoR, pernaL, pernaR, anel, largo, flash: 0 };
 }
 
 function pintar(rig, claro) {
@@ -288,9 +288,12 @@ function zerar(rig) {
   rig.torso.position.y = 0.32;
   rig.torso.rotation.set(0, 0, 0);
   rig.cabeca.rotation.set(0, 0, 0);
+  const largo = rig.largo || 1;
+  rig.bracoL.ombro.position.set(-0.3 * largo, 0.4, 0);
+  rig.bracoR.ombro.position.set(0.3 * largo, 0.4, 0);
   [rig.bracoL, rig.bracoR].forEach((braco) => {
-    braco.ombro.rotation.set(0.2, 0, 0);
-    braco.cotovelo.rotation.set(0.45, 0, 0);
+    braco.ombro.rotation.set(0.25, 0, 0);
+    braco.cotovelo.rotation.set(0.5, 0, 0);
   });
   [rig.pernaL, rig.pernaR].forEach((perna) => {
     perna.quadril.rotation.set(0, 0, 0);
@@ -331,15 +334,18 @@ function posar(rig, f, agora) {
     rig.torso.rotation.x = 0.12;
   }
   if (s === "soco" || s === "rajada") {
-    rig.bracoR.ombro.rotation.x = -1.55 * u;
-    rig.bracoR.cotovelo.rotation.x = 0.2 + (1 - u) * 0.4;
-    rig.torso.rotation.y = 0.45 * u;
-    if (s === "rajada") rig.bracoL.ombro.rotation.x = -1.2 * u;
+    rig.bracoR.ombro.position.x = 0.1;
+    rig.bracoR.ombro.position.z = 0.22 * u;
+    rig.bracoR.ombro.rotation.x = -1.25 * u;
+    rig.bracoR.cotovelo.rotation.x = 0.15 * (1 - u);
+    rig.torso.rotation.x = 0.42 * u;
+    rig.torso.rotation.y = 0.25 * u;
+    if (s === "rajada") rig.bracoL.ombro.rotation.x = -1.1 * u;
   }
   if (s === "chute") {
-    rig.pernaR.quadril.rotation.x = -1.35 * u;
-    rig.pernaR.joelho.rotation.x = 0.4 * (1 - u);
-    rig.torso.rotation.x = -0.2 * u;
+    rig.pernaR.quadril.rotation.x = -1.55 * u;
+    rig.pernaR.joelho.rotation.x = 0.25 * (1 - u);
+    rig.torso.rotation.x = -0.35 * u;
   }
   if (s === "agarra") {
     rig.bracoL.ombro.rotation.x = -1.4 * u;
@@ -381,10 +387,29 @@ function posar(rig, f, agora) {
   if (mao && mao.material && mao.material.emissive) mao.material.emissive.setHex(noMeio ? 0x6a4228 : 0x000000);
 }
 
-function colocar(rig, f, agora) {
+function avancar(rig, f, outro) {
+  const g = GOLPES[f.estado];
+  if (!g || !outro) return;
+  const u = curva(f);
+  if (u < 0.25) return;
+  const dx = outro.x - f.x;
+  const dz = outro.z - f.z;
+  const dist = Math.hypot(dx, dz);
+  if (dist < 0.2) return;
+  const membro = f.estado === "chute" ? 0.9 : 0.5;
+  const falta = dist - membro - 0.15;
+  if (falta <= 0) return;
+  const cabe = dist <= g.alcance + 0.55;
+  const passo = (cabe ? Math.min(falta, 1.15) : Math.min(falta, 0.18)) * u;
+  rig.g.position.x += (dx / dist) * passo;
+  rig.g.position.z += (dz / dist) * passo;
+}
+
+function colocar(rig, f, outro, agora) {
   rig.g.position.set(f.x, 0, f.z);
   rig.g.rotation.y = f.yaw;
   posar(rig, f, agora);
+  avancar(rig, f, outro);
   if (rig.flash > 0) {
     pintar(rig, true);
     rig.flash = Math.max(0, rig.flash - 0.016);
@@ -546,11 +571,11 @@ function quadro() {
     lerEntrada();
   }
   if (luta && rigA && rigB) {
-    colocar(rigA, luta.a, agora);
-    colocar(rigB, luta.b, agora);
+    colocar(rigA, luta.a, luta.b, agora);
+    colocar(rigB, luta.b, luta.a, agora);
   } else if (rigA && rigB) {
-    colocar(rigA, { id: "kadu", x: -1.8, z: 0, yaw: Math.PI / 2, estado: "idle", t: 0, stun: 0, lado: 1 }, agora);
-    colocar(rigB, { id: "nilo", x: 1.8, z: 0, yaw: -Math.PI / 2, estado: "idle", t: 0, stun: 0, lado: 1 }, agora);
+    colocar(rigA, { id: "kadu", x: -1.8, z: 0, yaw: Math.PI / 2, estado: "idle", t: 0, stun: 0, lado: 1 }, null, agora);
+    colocar(rigB, { id: "nilo", x: 1.8, z: 0, yaw: -Math.PI / 2, estado: "idle", t: 0, stun: 0, lado: 1 }, null, agora);
   }
   enquadrar(dt);
   renderer.render(cena, camera);
@@ -629,6 +654,15 @@ usar(ELENCO[0], ELENCO[1]);
 tamanho();
 requestAnimationFrame(quadro);
 
+function mao(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const outro = luta && (quem === "b" ? luta.a : luta.b);
+  const p = new THREE.Vector3();
+  rig.bracoR.mao.getWorldPosition(p);
+  const d = outro ? Math.hypot(p.x - outro.x, p.z - outro.z) : 0;
+  return { x: p.x, y: p.y, z: p.z, d };
+}
+
 function medida(quem) {
   const rig = quem === "b" ? rigB : rigA;
   const caixa = new THREE.Box3().setFromObject(rig.g);
@@ -644,5 +678,6 @@ window.STREET = {
   get luta() { return luta; },
   comecar,
   medida,
+  mao,
   escolher(id) { escolhido = id; marcarCarta(); }
 };
