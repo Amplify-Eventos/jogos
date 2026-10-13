@@ -103,6 +103,16 @@ h1 { font-size: 3rem; }
   filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55));
   transition: transform 0.12s ease;
 }
+.ringue img.soco {
+  width: min(56vw, 280px);
+  height: min(46vh, 360px);
+}
+.ringue img.queda {
+  width: min(64vh, 440px);
+  height: auto;
+}
+#luta.acabou .dedo { visibility: hidden; }
+#luta.acabou .ringue { padding-bottom: 8.5rem; }
 .ringue img.bate { transform: translateX(18px) scale(1.04); }
 .ringue img.toma { transform: translateX(10px); filter: brightness(1.6) drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55)); }
 #nilo.bate { transform: translateX(-18px) scale(1.04); }
