@@ -102,8 +102,8 @@ h1 { font-size: 3rem; }
   object-position: center bottom;
   filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55));
 }
-#kadu { left: var(--chao, 2%); }
-#nilo { right: var(--chao, 2%); }
+#kadu { left: 4%; }
+#nilo { left: 62%; }
 #kadu.vai { z-index: 2; animation: atravessa-dir 0.5s ease; }
 #nilo.vai { z-index: 2; animation: atravessa-esq 0.5s ease; }
 #kadu.chute.vai, #nilo.chute.vai { animation-duration: 0.66s; }

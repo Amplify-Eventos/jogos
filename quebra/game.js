@@ -19,7 +19,8 @@
   };
   var volta = { kadu: 0, nilo: 0 };
   var fila = [];
-  var chao = { kadu: 2, nilo: 2 };
+  var posto = { kadu: 4, nilo: 62 };
+  var ALCANCE = { soco: 70, chute: 130 };
 
   function dano(golpe, guarda) {
     if (golpe === "soco") return guarda > 0 ? 3 : 10;
@@ -54,26 +55,42 @@
   }
 
   function plantar() {
-    imgKadu.style.left = chao.kadu + "%";
-    imgNilo.style.right = chao.nilo + "%";
+    imgKadu.style.left = posto.kadu + "%";
+    imgKadu.style.right = "auto";
+    imgNilo.style.left = posto.nilo + "%";
+    imgNilo.style.right = "auto";
   }
 
-  function mirar(de) {
+  function vaoEntre(de) {
     var atacante = imgDe(de);
     var outro = de === "kadu" ? imgNilo : imgKadu;
-    var alcance = "26vw";
-    if (atacante.getBoundingClientRect && outro.getBoundingClientRect) {
-      var a = atacante.getBoundingClientRect();
-      var b = outro.getBoundingClientRect();
-      var vao = de === "kadu" ? b.left - a.right + 40 : a.left - b.right + 40;
-      if (!isFinite(vao) || vao < 24) vao = 24;
-      alcance = (de === "kadu" ? vao : -vao) + "px";
-    }
-    if (atacante.style && atacante.style.setProperty) atacante.style.setProperty("--alcance", alcance);
+    if (!atacante.getBoundingClientRect || !outro.getBoundingClientRect) return null;
+    var a = atacante.getBoundingClientRect();
+    var b = outro.getBoundingClientRect();
+    var vao = de === "kadu" ? b.left - a.right : a.left - b.right;
+    if (!isFinite(vao)) return null;
+    return vao;
   }
 
-  function atravessa(de, tipo) {
-    mirar(de);
+  function noAlcance(vao, tipo) {
+    if (vao === null) return true;
+    return vao <= ALCANCE[tipo];
+  }
+
+  function mirar(de, tipo, acerta) {
+    var atacante = imgDe(de);
+    var vao = vaoEntre(de);
+    var px = acerta ? (vao === null ? null : vao + 36) : ALCANCE[tipo];
+    var valor = "26vw";
+    if (px !== null) {
+      if (px < 24) px = 24;
+      valor = (de === "kadu" ? px : -px) + "px";
+    }
+    if (atacante.style && atacante.style.setProperty) atacante.style.setProperty("--alcance", valor);
+  }
+
+  function atravessa(de, tipo, acerta) {
+    mirar(de, tipo, acerta);
     mostrar(de, tipo);
     var atacante = imgDe(de);
     var outro = de === "kadu" ? imgNilo : imgKadu;
@@ -81,15 +98,22 @@
     void atacante.offsetWidth;
     void outro.offsetWidth;
     atacante.classList.add("vai");
-    outro.classList.add("recua");
+    if (acerta) outro.classList.add("recua");
   }
 
   function aplicar(item) {
     if (fase !== "luta") return;
+    if (!item.acerta) {
+      if (item.de === "kadu") posto.kadu = Math.min(posto.nilo - 28, posto.kadu + 8);
+      else posto.nilo = Math.max(posto.kadu + 28, posto.nilo - 8);
+      plantar();
+      return;
+    }
     var alvo = item.alvo === "kadu" ? kadu : nilo;
     var guarda = alvo.guarda > item.quando ? 1 : 0;
     alvo.hp -= dano(item.tipo, guarda);
-    chao[item.alvo] = Math.min(34, chao[item.alvo] + 5);
+    if (item.alvo === "kadu") posto.kadu = Math.max(0, posto.kadu - 6);
+    else posto.nilo = Math.min(78, posto.nilo + 6);
     plantar();
     pintar();
     var fimDe = acabou();
@@ -131,9 +155,10 @@
     }
     var alvoNome = de === "kadu" ? "nilo" : "kadu";
     var longo = tipo === "chute";
-    fala.textContent = (de === "kadu" ? "Kadu" : "Nilo") + " — " + tipo + ".";
-    atravessa(de, tipo);
-    fila.push({ tipo: tipo, alvo: alvoNome, quando: agora + (longo ? 280 : 190) });
+    var acerta = noAlcance(vaoEntre(de), tipo);
+    fala.textContent = (de === "kadu" ? "Kadu" : "Nilo") + " — " + tipo + (acerta ? "." : ". Passou.");
+    atravessa(de, tipo, acerta);
+    fila.push({ de: de, tipo: tipo, alvo: alvoNome, acerta: acerta, quando: agora + (longo ? 280 : 190) });
     volta[de] = agora + (longo ? 660 : 500);
     if (de === "kadu") trava = agora + (longo ? 520 : 340);
   }
@@ -153,8 +178,8 @@
     volta.kadu = 0;
     volta.nilo = 0;
     fila = [];
-    chao.kadu = 2;
-    chao.nilo = 2;
+    posto.kadu = 4;
+    posto.nilo = 62;
     plantar();
     mostrar("kadu", "parado");
     mostrar("nilo", "parado");
@@ -201,5 +226,5 @@
   document.getElementById("fechar-versoes").onclick = function () { versoes.hidden = true; };
   requestAnimationFrame(tick);
 
-  window.Quebra = { dano: dano };
+  window.Quebra = { dano: dano, noAlcance: noAlcance };
 })();
