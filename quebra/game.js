@@ -19,7 +19,7 @@
   };
   var volta = { kadu: 0, nilo: 0 };
   var fila = [];
-  var posto = { kadu: 4, nilo: 62 };
+  var posto = { kadu: { fundo: 8 }, nilo: { fundo: 74 } };
   var ALCANCE = { soco: 70, chute: 130 };
 
   function dano(golpe, guarda) {
@@ -54,11 +54,21 @@
     if (qual !== "parado") img.classList.add(qual);
   }
 
+  function colocar(img, fundo, casa) {
+    var t = Math.max(0, Math.min(100, fundo)) / 100;
+    var bottom = t * 46;
+    var scale = (casa ? 1.2 : 1.08) - t * 0.74;
+    var lado = casa ? 4 + t * 30 : 62 - t * 18;
+    img.style.left = lado + "%";
+    img.style.right = "auto";
+    img.style.bottom = bottom + "%";
+    img.style.zIndex = String(Math.round(180 - fundo));
+    if (img.style && img.style.setProperty) img.style.setProperty("--corpo", scale.toFixed(3));
+  }
+
   function plantar() {
-    imgKadu.style.left = posto.kadu + "%";
-    imgKadu.style.right = "auto";
-    imgNilo.style.left = posto.nilo + "%";
-    imgNilo.style.right = "auto";
+    colocar(imgKadu, posto.kadu.fundo, true);
+    colocar(imgNilo, posto.nilo.fundo, false);
   }
 
   function vaoEntre(de) {
@@ -67,9 +77,14 @@
     if (!atacante.getBoundingClientRect || !outro.getBoundingClientRect) return null;
     var a = atacante.getBoundingClientRect();
     var b = outro.getBoundingClientRect();
-    var vao = de === "kadu" ? b.left - a.right : a.left - b.right;
-    if (!isFinite(vao)) return null;
-    return vao;
+    if (!isFinite(a.left) || !isFinite(a.right) || !isFinite(b.left) || !isFinite(b.right)) return null;
+    var dx = de === "kadu" ? b.left - a.right : a.left - b.right;
+    if (!isFinite(dx)) return null;
+    if (dx < 0) dx = 0;
+    var fundo = Math.abs(posto.nilo.fundo - posto.kadu.fundo) * 3;
+    var naTela = isFinite(a.top) && isFinite(b.top);
+    if (!naTela && dx > 0) return Math.max(dx, fundo);
+    return fundo;
   }
 
   function noAlcance(vao, tipo) {
@@ -79,14 +94,26 @@
 
   function mirar(de, tipo, acerta) {
     var atacante = imgDe(de);
-    var vao = vaoEntre(de);
-    var px = acerta ? (vao === null ? null : vao + 36) : ALCANCE[tipo];
-    var valor = "26vw";
-    if (px !== null) {
-      if (px < 24) px = 24;
-      valor = (de === "kadu" ? px : -px) + "px";
+    var outro = de === "kadu" ? imgNilo : imgKadu;
+    var sinal = de === "kadu" ? 1 : -1;
+    var ax = sinal * 28;
+    var ay = sinal * -64;
+    if (atacante.getBoundingClientRect && outro.getBoundingClientRect) {
+      var a = atacante.getBoundingClientRect();
+      var b = outro.getBoundingClientRect();
+      if (isFinite(a.left) && isFinite(b.left) && isFinite(a.top) && isFinite(b.top) && isFinite(a.right) && isFinite(b.right)) {
+        var dx = ((b.left + b.right) / 2) - ((a.left + a.right) / 2);
+        var dy = ((b.top + b.bottom) / 2) - ((a.top + a.bottom) / 2);
+        var dist = Math.hypot(dx, dy) || 1;
+        var alcance = acerta ? Math.max(24, dist * 0.7) : ALCANCE[tipo];
+        ax = dx / dist * alcance;
+        ay = dy / dist * alcance;
+      }
     }
-    if (atacante.style && atacante.style.setProperty) atacante.style.setProperty("--alcance", valor);
+    if (atacante.style && atacante.style.setProperty) {
+      atacante.style.setProperty("--alcance-x", Math.round(ax) + "px");
+      atacante.style.setProperty("--alcance-y", Math.round(ay) + "px");
+    }
   }
 
   function atravessa(de, tipo, acerta) {
@@ -104,16 +131,16 @@
   function aplicar(item) {
     if (fase !== "luta") return;
     if (!item.acerta) {
-      if (item.de === "kadu") posto.kadu = Math.min(posto.nilo - 28, posto.kadu + 8);
-      else posto.nilo = Math.max(posto.kadu + 28, posto.nilo - 8);
+      if (item.de === "kadu") posto.kadu.fundo = Math.min(posto.nilo.fundo - 14, posto.kadu.fundo + 16);
+      else posto.nilo.fundo = Math.max(posto.kadu.fundo + 14, posto.nilo.fundo - 16);
       plantar();
       return;
     }
     var alvo = item.alvo === "kadu" ? kadu : nilo;
     var guarda = alvo.guarda > item.quando ? 1 : 0;
     alvo.hp -= dano(item.tipo, guarda);
-    if (item.alvo === "kadu") posto.kadu = Math.max(0, posto.kadu - 6);
-    else posto.nilo = Math.min(78, posto.nilo + 6);
+    if (item.alvo === "kadu") posto.kadu.fundo = Math.max(0, posto.kadu.fundo - 12);
+    else posto.nilo.fundo = Math.min(94, posto.nilo.fundo + 12);
     plantar();
     pintar();
     var fimDe = acabou();
@@ -178,12 +205,12 @@
     volta.kadu = 0;
     volta.nilo = 0;
     fila = [];
-    posto.kadu = 4;
-    posto.nilo = 62;
+    posto.kadu.fundo = 8;
+    posto.nilo.fundo = 74;
     plantar();
     mostrar("kadu", "parado");
     mostrar("nilo", "parado");
-    fala.textContent = "A rua é essa.";
+    fala.textContent = "O Nilo está no fundo da rua.";
     pintar();
   }
 
