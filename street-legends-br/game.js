@@ -353,10 +353,13 @@ function posar(rig, f, agora) {
     rig.bracoL.ombro.rotation.x = -0.55 * u;
     rig.bracoR.ombro.rotation.x = 0.35 * u;
   }
-  if (s === "agarra") {
-    rig.bracoL.ombro.rotation.x = -1.4 * u;
-    rig.bracoR.ombro.rotation.x = -1.4 * u;
-    rig.torso.rotation.x = -0.25 * u;
+  if (s === "agarra" || s === "cola") {
+    const k = s === "cola" ? 1 : u;
+    rig.bracoL.ombro.rotation.x = -1.35 * k;
+    rig.bracoR.ombro.rotation.x = -1.35 * k;
+    rig.bracoL.ombro.rotation.z = 0.45 * k;
+    rig.bracoR.ombro.rotation.z = -0.45 * k;
+    rig.torso.rotation.x = 0.4 * k;
   }
   if (s === "ombro") {
     rig.torso.rotation.x = -0.55 * u;

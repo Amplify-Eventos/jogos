@@ -79,7 +79,9 @@ function criarLutador(dados, x, z) {
     noMuro: false,
     lado: 1,
     andando: false,
-    fecha: false
+    fecha: false,
+    segura: false,
+    seguro: false
   };
 }
 
@@ -100,7 +102,8 @@ export function criarLuta(idJogador, semente = 1) {
     ultimo: null,
     aviso: "",
     avisoT: 0,
-    vencedor: ""
+    vencedor: "",
+    cola: null
   };
 }
 
@@ -132,6 +135,7 @@ function emGolpe(f) {
 }
 
 function podeComecar(f) {
+  if (f.estado === "cola") return !!f.segura;
   if (f.fecha && emGolpe(f)) return false;
   if (f.estado === "idle" || f.estado === "walk" || f.estado === "guarda") return true;
   if (!emGolpe(f) || !f.conectou) return false;
@@ -185,6 +189,8 @@ function atualizar(f, entrada, outro, dt) {
     const novo = comando(f, entrada);
     if (novo) {
       comecar(f, novo, entrada);
+    } else if (f.estado === "cola") {
+      /* fica grudado até o golpe seguinte */
     } else if (f.estado === "guarda") {
       if (!entrada.guarda) f.estado = movendo(entrada) ? "walk" : "idle";
     } else if (!ocupado(f) && !emGolpe(f)) {
@@ -197,6 +203,7 @@ function atualizar(f, entrada, outro, dt) {
     if (f.estado !== "guarda") f.estado = f.andando ? "walk" : "idle";
     return;
   }
+  if (f.estado === "cola") return;
   if (f.estado === "esquiva") {
     const dirX = Math.cos(f.yaw);
     const dirZ = -Math.sin(f.yaw);
@@ -290,7 +297,7 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
     avisar(luta, alvo.nome + " sai.");
     return;
   }
-  if (alvo.estado === "guarda" && naFrente(alvo, atacante)) {
+  if (alvo.estado === "guarda" && naFrente(alvo, atacante) && !atacante.segura) {
     const chip = Math.max(1, Math.round(danoDe(tipo, atacante, { contra: false, combo: 1 }) * 0.2));
     alvo.hp = Math.max(0, alvo.hp - chip);
     const dx = alvo.x - atacante.x;
@@ -302,6 +309,21 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
     avisar(luta, alvo.nome + " segura.");
     return;
   }
+  if (tipo === "agarra") {
+    luta.cola = atacante.id;
+    atacante.segura = true;
+    atacante.estado = "cola";
+    atacante.t = 0;
+    atacante.recuo = 0.45;
+    alvo.seguro = true;
+    alvo.estado = "cola";
+    alvo.t = 0;
+    alvo.conectou = false;
+    luta.ultimo = { tipo: "agarra", quem: atacante.id, alvo: alvo.id, dano: 0 };
+    avisar(luta, atacante.nome + " agarra.");
+    return;
+  }
+  const solta = !!(atacante.segura && (alvo.seguro || alvo.estado === "cola"));
   const contra = emRecuperacao(alvo);
   const combo = alvo.estado === "hit" ? atacante.combo + 1 : 1;
   atacante.combo = combo;
@@ -311,9 +333,15 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
   const dx = alvo.x - atacante.x;
   const dz = alvo.z - atacante.z;
   const len = Math.hypot(dx, dz) || 1;
-  alvo.x += (dx / len) * g.empurra;
-  alvo.z += (dz / len) * g.empurra;
-  const derruba = alvo.hp <= 0 || tipo === "agarra" || tipo === "ombro" || (tipo === "chute" && combo >= 2);
+  const empurra = g.empurra + (solta ? 1.15 : 0);
+  alvo.x += (dx / len) * empurra;
+  alvo.z += (dz / len) * empurra;
+  if (solta) {
+    atacante.segura = false;
+    alvo.seguro = false;
+    luta.cola = null;
+  }
+  const derruba = alvo.hp <= 0 || solta || tipo === "ombro" || (tipo === "chute" && combo >= 2);
   if (alvo.hp <= 0) {
     alvo.estado = "ko";
     alvo.t = 0;
@@ -328,7 +356,7 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
     alvo.conectou = false;
   }
   alvo.noMuro = false;
-  let texto = contra ? "Contra." : combo > 1 ? "Combo " + combo + "." : atacante.nome + " acerta.";
+  let texto = solta ? atacante.nome + " empurra." : contra ? "Contra." : combo > 1 ? "Combo " + combo + "." : atacante.nome + " acerta.";
   luta.ultimo = { tipo: contra ? "contra" : combo > 1 ? "combo" : "acerto", quem: atacante.id, alvo: alvo.id, dano };
   avisar(luta, texto);
 }
@@ -346,6 +374,21 @@ function limitar(f, luta) {
   f.stun += 0.15;
   luta.ultimo = { tipo: "muro", quem: f.id, alvo: f.id, dano: 4 };
   avisar(luta, f.nome + " no muro.");
+}
+
+function grudar(a, b) {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const d = Math.hypot(dx, dz) || 1;
+  const nx = dx / d;
+  const nz = dz / d;
+  const meioX = (a.x + b.x) / 2;
+  const meioZ = (a.z + b.z) / 2;
+  const aperto = 0.36;
+  a.x = meioX - nx * aperto;
+  a.z = meioZ - nz * aperto;
+  b.x = meioX + nx * aperto;
+  b.z = meioZ + nz * aperto;
 }
 
 function separar(a, b) {
@@ -398,6 +441,11 @@ function encerrar(luta) {
 
 export function pensar(eu, outro, luta) {
   const e = vazio();
+  if (eu.seguro || (eu.estado === "cola" && !eu.segura)) return e;
+  if (eu.segura) {
+    if (eu.recuo <= 0) e.soco = true;
+    return e;
+  }
   const dx = outro.x - eu.x;
   const dz = outro.z - eu.z;
   const d = Math.hypot(dx, dz) || 1;
@@ -454,7 +502,8 @@ export function passo(luta, dt, entradaA, entradaB) {
   if (gb) aplicarAcerto(luta.b, luta.a, tipoB, gb, luta);
   if (luta.b.hp <= 0 && luta.b.estado !== "ko") luta.b.estado = "ko";
   if (luta.a.hp <= 0 && luta.a.estado !== "ko") luta.a.estado = "ko";
-  separar(luta.a, luta.b);
+  if (luta.cola) grudar(luta.a, luta.b);
+  else separar(luta.a, luta.b);
   limitar(luta.a, luta);
   limitar(luta.b, luta);
   encerrar(luta);
