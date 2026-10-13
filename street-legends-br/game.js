@@ -385,6 +385,13 @@ function zerar(rig) {
   });
 }
 
+function pesoDoAcerto(t, stun) {
+  const dura = Math.max(0.28, stun || 0.34);
+  const segura = dura * 0.62;
+  if (t <= segura) return 1;
+  return Math.max(0, 1 - (t - segura) / (dura - segura));
+}
+
 function curva(f) {
   const g = GOLPES[f.estado];
   if (!g) return 0;
@@ -454,11 +461,16 @@ function posar(rig, f, agora) {
     rig.corpo.position.x = (f.lado || 1) * 0.18 * k;
   }
   if (s === "hit") {
-    const k = 1 - Math.min(1, f.t / Math.max(0.1, f.stun || 0.3));
-    rig.torso.rotation.x = 0.55 * k;
-    rig.cabeca.rotation.x = -0.45 * k;
-    rig.bracoL.ombro.rotation.x = 0.4 * k;
-    rig.bracoR.ombro.rotation.x = 0.4 * k;
+    const k = pesoDoAcerto(f.t, f.stun);
+    rig.hips.position.y = 0.96 - 0.14 * k;
+    rig.torso.rotation.x = 0.95 * k;
+    rig.cabeca.rotation.x = 0.5 * k;
+    rig.pernaL.joelho.rotation.x = 0.75 * k;
+    rig.pernaR.joelho.rotation.x = 0.75 * k;
+    rig.bracoL.ombro.rotation.x = 0.85 * k;
+    rig.bracoR.ombro.rotation.x = 0.85 * k;
+    rig.bracoL.cotovelo.rotation.x = 0.9 * k;
+    rig.bracoR.cotovelo.rotation.x = 0.9 * k;
   }
   if (s === "queda" || s === "ko" || s === "levanta") {
     let k = 1;
@@ -768,6 +780,17 @@ function silhueta(quem) {
   return { partes, cilindro, esfera };
 }
 
+function dobra(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
+  return {
+    k: pesoDoAcerto(f ? f.t : 0, f ? f.stun : 0.52),
+    torso: rig.torso.rotation.x,
+    joelho: rig.pernaR.joelho.rotation.x,
+    hips: rig.hips.position.y
+  };
+}
+
 function mao(quem) {
   const rig = quem === "b" ? rigB : rigA;
   return pontoDe(quem, rig.bracoR.mao);
@@ -796,5 +819,6 @@ window.STREET = {
   mao,
   pe,
   silhueta,
+  dobra,
   escolher(id) { escolhido = id; marcarCarta(); }
 };

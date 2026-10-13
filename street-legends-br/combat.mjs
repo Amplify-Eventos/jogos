@@ -352,7 +352,7 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
   } else {
     alvo.estado = "hit";
     alvo.t = 0;
-    alvo.stun = g.stun;
+    alvo.stun = Math.max(g.stun, 0.52);
     alvo.conectou = false;
   }
   alvo.noMuro = false;
