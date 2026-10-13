@@ -13,5 +13,10 @@
     "nome": "Quebra",
     "slug": "quebra",
     "capa": "quebra/art/capa.jpg"
+  },
+  {
+    "nome": "Street Legends BR",
+    "slug": "street-legends-br",
+    "capa": "street-legends-br/index.html"
   }
 ]
