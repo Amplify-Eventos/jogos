@@ -52,9 +52,41 @@ function malha(geo, material) {
   return m;
 }
 
-function cilindro(raioA, raioB, altura, material) {
-  const m = malha(new THREE.CylinderGeometry(raioA, raioB, altura, 10), material);
-  return m;
+function solido(aneis, material, lados) {
+  const n = lados || 6;
+  const pos = [];
+  const ponto = (anel, k) => {
+    const a = (k / n) * Math.PI * 2;
+    return [Math.cos(a) * anel.rx, anel.y, Math.sin(a) * anel.rz + (anel.oz || 0)];
+  };
+  const tri = (a, b, c) => pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+  for (let i = 0; i < aneis.length - 1; i += 1) {
+    for (let k = 0; k < n; k += 1) {
+      const a = ponto(aneis[i], k);
+      const b = ponto(aneis[i], k + 1);
+      const c = ponto(aneis[i + 1], k);
+      const d = ponto(aneis[i + 1], k + 1);
+      tri(a, c, b);
+      tri(b, c, d);
+    }
+  }
+  const baixo = [0, aneis[0].y, aneis[0].oz || 0];
+  const alto = [0, aneis[aneis.length - 1].y, aneis[aneis.length - 1].oz || 0];
+  for (let k = 0; k < n; k += 1) {
+    tri(baixo, ponto(aneis[0], k + 1), ponto(aneis[0], k));
+    tri(alto, ponto(aneis[aneis.length - 1], k), ponto(aneis[aneis.length - 1], k + 1));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  const mat = material.clone();
+  mat.side = THREE.DoubleSide;
+  return malha(geo, mat);
+}
+
+function marcar(mesh, parte) {
+  mesh.userData.parte = parte;
+  return mesh;
 }
 
 function boneco(dados) {
@@ -72,48 +104,73 @@ function boneco(dados) {
 
   const hips = new THREE.Group();
   hips.position.y = 0.96;
-  const pelvis = cilindro(0.16 * largo, 0.18 * largo, 0.22, calca);
+  const pelvis = marcar(solido([
+    { y: -0.1, rx: 0.13 * largo, rz: 0.1 },
+    { y: 0.02, rx: 0.2 * largo, rz: 0.13 },
+    { y: 0.18, rx: 0.15 * largo, rz: 0.11 }
+  ], calca, 8), "quadril");
   hips.add(pelvis);
   corpo.add(hips);
 
   const torso = new THREE.Group();
   torso.position.y = 0.28;
-  const peito = malha(new THREE.BoxGeometry(0.46 * largo, 0.42, 0.24), roupa);
-  peito.position.y = 0.24;
+  const peito = marcar(solido([
+    { y: -0.34, rx: 0.14 * largo, rz: 0.1 },
+    { y: -0.14, rx: 0.17 * largo, rz: 0.11, oz: 0.01 },
+    { y: 0.04, rx: 0.22 * largo, rz: 0.14, oz: 0.02 },
+    { y: 0.2, rx: 0.26 * largo, rz: 0.13 }
+  ], roupa, 8), "peito");
+  peito.position.y = 0.14;
   torso.add(peito);
-  const camisa = malha(new THREE.BoxGeometry(0.16, 0.28, 0.04), cor(dados.careca ? "#6a241c" : "#f4efe6", 0.55));
-  camisa.position.set(0, 0.2, 0.13);
-  torso.add(camisa);
-  const pescoco = cilindro(0.07, 0.08, 0.1, pele);
-  pescoco.position.y = 0.5;
+  const pescoco = solido([
+    { y: -0.14, rx: 0.075, rz: 0.065 },
+    { y: 0.12, rx: 0.06, rz: 0.055 }
+  ], pele, 6);
+  pescoco.position.y = 0.46;
   torso.add(pescoco);
 
   const cabeca = new THREE.Group();
-  cabeca.position.y = 0.66;
-  const cranio = malha(new THREE.SphereGeometry(0.17, 16, 14), pele);
-  cranio.scale.set(1, 1.08, 0.96);
+  cabeca.position.y = 0.64;
+  const cranio = solido([
+    { y: -0.12, rx: 0.07, rz: 0.06, oz: 0.02 },
+    { y: -0.04, rx: 0.12, rz: 0.1, oz: 0.015 },
+    { y: 0.06, rx: 0.145, rz: 0.12 },
+    { y: 0.15, rx: 0.08, rz: 0.07 }
+  ], pele, 8);
   cabeca.add(cranio);
+  const queixo = marcar(solido([
+    { y: 0, rx: 0.03, rz: 0.02 },
+    { y: 0.045, rx: 0.055, rz: 0.035, oz: 0.012 }
+  ], pele, 5), "queixo");
+  queixo.position.set(0, -0.1, 0.08);
+  queixo.rotation.x = -0.45;
+  cabeca.add(queixo);
   [-1, 1].forEach((lado) => {
-    const olho = malha(new THREE.SphereGeometry(0.026, 8, 6), olhoMat);
-    olho.position.set(lado * 0.055, 0.02, 0.145);
+    const olho = malha(new THREE.BoxGeometry(0.03, 0.016, 0.012), olhoMat);
+    olho.position.set(lado * 0.05, 0.02, 0.12);
     cabeca.add(olho);
   });
-  const nariz = malha(new THREE.SphereGeometry(0.03, 8, 6), pele);
-  nariz.position.set(0, -0.02, 0.155);
-  nariz.scale.set(0.8, 0.7, 1);
+  const nariz = solido([
+    { y: 0, rx: 0.012, rz: 0.012 },
+    { y: 0.04, rx: 0.02, rz: 0.016 }
+  ], pele, 4);
+  nariz.position.set(0, -0.03, 0.12);
+  nariz.rotation.x = 1.1;
   cabeca.add(nariz);
   if (dados.careca) {
-    const sobrancelha = malha(new THREE.BoxGeometry(0.14, 0.02, 0.02), cabeloMat);
-    sobrancelha.position.set(0, 0.07, 0.15);
+    const sobrancelha = malha(new THREE.BoxGeometry(0.14, 0.018, 0.016), cabeloMat);
+    sobrancelha.position.set(0, 0.06, 0.12);
     cabeca.add(sobrancelha);
   } else {
-    const pelo = malha(new THREE.SphereGeometry(0.18, 14, 12), cabeloMat);
-    pelo.scale.set(1.05, 0.62, 1.02);
-    pelo.position.y = 0.08;
+    const pelo = solido([
+      { y: 0, rx: 0.15, rz: 0.14 },
+      { y: 0.05, rx: 0.155, rz: 0.145 },
+      { y: 0.11, rx: 0.08, rz: 0.07 }
+    ], cabeloMat, 8);
+    pelo.position.y = 0.05;
     cabeca.add(pelo);
-    const brinco = malha(new THREE.TorusGeometry(0.02, 0.006, 6, 8), cor("#e0b15a", 0.35));
-    brinco.position.set(-0.16, -0.04, 0.02);
-    brinco.rotation.y = Math.PI / 2;
+    const brinco = malha(new THREE.BoxGeometry(0.012, 0.04, 0.012), cor("#e0b15a", 0.35));
+    brinco.position.set(-0.15, -0.05, 0.02);
     cabeca.add(brinco);
   }
   torso.add(cabeca);
@@ -122,21 +179,38 @@ function boneco(dados) {
   function braco(lado) {
     const ombro = new THREE.Group();
     ombro.position.set(lado * 0.3 * largo, 0.4, 0);
-    const junta = malha(new THREE.SphereGeometry(0.07, 10, 8), dados.careca ? pele : roupa);
+    const junta = solido([
+      { y: -0.02, rx: 0.06, rz: 0.05 },
+      { y: 0.04, rx: 0.075, rz: 0.06 },
+      { y: 0.08, rx: 0.03, rz: 0.03 }
+    ], dados.careca ? pele : roupa, 6);
     ombro.add(junta);
     const manga = dados.careca ? pele : roupa;
-    const cima = cilindro(0.07, 0.06, 0.3, manga);
-    cima.position.y = -0.18;
+    const cima = solido([
+      { y: -0.2, rx: 0.05, rz: 0.05 },
+      { y: 0, rx: 0.068, rz: 0.062 },
+      { y: 0.16, rx: 0.055, rz: 0.05 }
+    ], manga, 6);
+    cima.position.y = -0.16;
     ombro.add(cima);
     const cotovelo = new THREE.Group();
     cotovelo.position.y = -0.32;
-    const ante = cilindro(0.055, 0.048, 0.28, pele);
-    ante.position.y = -0.15;
+    const ante = solido([
+      { y: -0.16, rx: 0.04, rz: 0.038 },
+      { y: 0, rx: 0.05, rz: 0.046 },
+      { y: 0.2, rx: 0.048, rz: 0.045 }
+    ], pele, 6);
+    ante.position.y = -0.14;
     cotovelo.add(ante);
-    const mao = malha(new THREE.SphereGeometry(0.065, 10, 8), pele.clone());
-    mao.scale.set(0.9, 0.75, 1.15);
+    const mao = marcar(malha(new THREE.BoxGeometry(0.09, 0.1, 0.045), pele.clone()), "mao");
     mao.position.y = -0.32;
-    mao.userData.base = pele.color.getHex();
+    const dedos = malha(new THREE.BoxGeometry(0.078, 0.04, 0.036), pele);
+    dedos.position.set(0, -0.065, 0.004);
+    mao.add(dedos);
+    const polegar = malha(new THREE.BoxGeometry(0.028, 0.045, 0.03), pele);
+    polegar.position.set(lado * 0.05, -0.01, 0.01);
+    polegar.rotation.z = lado * -0.7;
+    mao.add(polegar);
     cotovelo.add(mao);
     ombro.add(cotovelo);
     torso.add(ombro);
@@ -146,12 +220,20 @@ function boneco(dados) {
   function perna(lado) {
     const quadril = new THREE.Group();
     quadril.position.set(lado * 0.11 * largo, -0.02, 0);
-    const coxa = cilindro(0.09, 0.07, 0.38, calca);
+    const coxa = marcar(solido([
+      { y: -0.24, rx: 0.052, rz: 0.058 },
+      { y: -0.02, rx: 0.08, rz: 0.09 },
+      { y: 0.2, rx: 0.1, rz: 0.105 }
+    ], calca, 7), "coxa");
     coxa.position.y = -0.2;
     quadril.add(coxa);
     const joelho = new THREE.Group();
     joelho.position.y = -0.4;
-    const canela = cilindro(0.06, 0.048, 0.36, calca);
+    const canela = marcar(solido([
+      { y: -0.17, rx: 0.036, rz: 0.04 },
+      { y: -0.02, rx: 0.055, rz: 0.074 },
+      { y: 0.24, rx: 0.05, rz: 0.052 }
+    ], calca, 6), "canela");
     canela.position.y = -0.18;
     joelho.add(canela);
     const cabedal = malha(new THREE.BoxGeometry(0.12, 0.07, 0.18), tenis);
@@ -672,6 +754,20 @@ function pontoDe(quem, osso) {
   return { x: p.x, y: p.y, z: p.z, d };
 }
 
+function silhueta(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const partes = {};
+  let cilindro = 0;
+  let esfera = 0;
+  rig.g.traverse((obj) => {
+    if (obj.userData && obj.userData.parte) partes[obj.userData.parte] = (partes[obj.userData.parte] || 0) + 1;
+    if (!obj.geometry) return;
+    if (obj.geometry.type === "CylinderGeometry") cilindro += 1;
+    if (obj.geometry.type === "SphereGeometry") esfera += 1;
+  });
+  return { partes, cilindro, esfera };
+}
+
 function mao(quem) {
   const rig = quem === "b" ? rigB : rigA;
   return pontoDe(quem, rig.bracoR.mao);
@@ -699,5 +795,6 @@ window.STREET = {
   medida,
   mao,
   pe,
+  silhueta,
   escolher(id) { escolhido = id; marcarCarta(); }
 };
