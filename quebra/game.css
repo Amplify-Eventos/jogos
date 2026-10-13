@@ -88,62 +88,49 @@ h1 { font-size: 3rem; }
   text-align: center;
 }
 .ringue {
+  position: relative;
   flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0.4rem;
+  display: block;
   padding: 0 0.4rem;
 }
 .ringue img {
-  position: relative;
-  width: min(42vw, 210px);
+  position: absolute;
+  bottom: 0;
+  width: min(34vw, 168px);
   height: min(46vh, 360px);
   object-fit: contain;
   object-position: center bottom;
   filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55));
 }
+#kadu { left: var(--chao, 2%); }
+#nilo { right: var(--chao, 2%); }
 #kadu.vai { z-index: 2; animation: atravessa-dir 0.5s ease; }
 #nilo.vai { z-index: 2; animation: atravessa-esq 0.5s ease; }
-#kadu.chute.vai { animation-duration: 0.66s; }
-#nilo.chute.vai { animation-duration: 0.66s; }
+#kadu.chute.vai, #nilo.chute.vai { animation-duration: 0.66s; }
 #nilo.recua { animation: recua-dir 0.5s ease; }
 #kadu.recua { animation: recua-esq 0.5s ease; }
-#kadu.recua.chute, #nilo.recua.chute { animation-duration: 0.66s; }
 @keyframes atravessa-dir {
   0% { transform: translateX(0); }
-  42% { transform: translateX(26vw); }
-  68% { transform: translateX(26vw); }
+  42% { transform: translateX(var(--alcance, 26vw)); }
+  68% { transform: translateX(var(--alcance, 26vw)); }
   100% { transform: translateX(0); }
 }
 @keyframes atravessa-esq {
   0% { transform: translateX(0); }
-  42% { transform: translateX(-26vw); }
-  68% { transform: translateX(-26vw); }
+  42% { transform: translateX(var(--alcance, -26vw)); }
+  68% { transform: translateX(var(--alcance, -26vw)); }
   100% { transform: translateX(0); }
 }
-#kadu.chute.vai { animation-name: atravessa-chute-dir; }
-#nilo.chute.vai { animation-name: atravessa-chute-esq; }
-@keyframes atravessa-chute-dir {
-  0% { transform: translateX(0); }
-  42% { transform: translateX(38vw); }
-  68% { transform: translateX(38vw); }
-  100% { transform: translateX(0); }
-}
-@keyframes atravessa-chute-esq {
-  0% { transform: translateX(0); }
-  42% { transform: translateX(-38vw); }
-  68% { transform: translateX(-38vw); }
-  100% { transform: translateX(0); }
-}
+#kadu.chute.vai { animation-name: atravessa-dir; }
+#nilo.chute.vai { animation-name: atravessa-esq; }
 @keyframes recua-dir {
-  0%, 38% { transform: translateX(0); }
-  52% { transform: translateX(16px); }
+  0%, 36% { transform: translateX(0); }
+  58% { transform: translateX(22px); }
   100% { transform: translateX(0); }
 }
 @keyframes recua-esq {
-  0%, 38% { transform: translateX(0); }
-  52% { transform: translateX(-16px); }
+  0%, 36% { transform: translateX(0); }
+  58% { transform: translateX(-22px); }
   100% { transform: translateX(0); }
 }
 .ringue img.soco {

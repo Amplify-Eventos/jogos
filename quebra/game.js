@@ -19,6 +19,7 @@
   };
   var volta = { kadu: 0, nilo: 0 };
   var fila = [];
+  var chao = { kadu: 2, nilo: 2 };
 
   function dano(golpe, guarda) {
     if (golpe === "soco") return guarda > 0 ? 3 : 10;
@@ -52,7 +53,27 @@
     if (qual !== "parado") img.classList.add(qual);
   }
 
+  function plantar() {
+    imgKadu.style.left = chao.kadu + "%";
+    imgNilo.style.right = chao.nilo + "%";
+  }
+
+  function mirar(de) {
+    var atacante = imgDe(de);
+    var outro = de === "kadu" ? imgNilo : imgKadu;
+    var alcance = "26vw";
+    if (atacante.getBoundingClientRect && outro.getBoundingClientRect) {
+      var a = atacante.getBoundingClientRect();
+      var b = outro.getBoundingClientRect();
+      var vao = de === "kadu" ? b.left - a.right + 40 : a.left - b.right + 40;
+      if (!isFinite(vao) || vao < 24) vao = 24;
+      alcance = (de === "kadu" ? vao : -vao) + "px";
+    }
+    if (atacante.style && atacante.style.setProperty) atacante.style.setProperty("--alcance", alcance);
+  }
+
   function atravessa(de, tipo) {
+    mirar(de);
     mostrar(de, tipo);
     var atacante = imgDe(de);
     var outro = de === "kadu" ? imgNilo : imgKadu;
@@ -68,6 +89,8 @@
     var alvo = item.alvo === "kadu" ? kadu : nilo;
     var guarda = alvo.guarda > item.quando ? 1 : 0;
     alvo.hp -= dano(item.tipo, guarda);
+    chao[item.alvo] = Math.min(34, chao[item.alvo] + 5);
+    plantar();
     pintar();
     var fimDe = acabou();
     if (fimDe) fechar(fimDe);
@@ -130,6 +153,9 @@
     volta.kadu = 0;
     volta.nilo = 0;
     fila = [];
+    chao.kadu = 2;
+    chao.nilo = 2;
+    plantar();
     mostrar("kadu", "parado");
     mostrar("nilo", "parado");
     fala.textContent = "A rua é essa.";
