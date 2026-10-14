@@ -15,6 +15,8 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.setClearColor(0x141820, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const cena = new THREE.Scene();
 cena.fog = new THREE.Fog(0x141820, 12, 28);
@@ -47,19 +49,62 @@ function cor(hex, rugoso) {
 
 function malha(geo, material) {
   const m = new THREE.Mesh(geo, material);
+  m.castShadow = true;
+  m.receiveShadow = true;
   m.userData.base = material.color.getHex();
   if (m.material.emissive) m.material.emissive.setHex(0x000000);
+  return m;
+}
+
+function pano(hex, tipo) {
+  const c = document.createElement("canvas");
+  c.width = 128;
+  c.height = 128;
+  const g = c.getContext("2d");
+  g.fillStyle = hex;
+  g.fillRect(0, 0, 128, 128);
+  if (tipo === "pele") {
+    g.fillStyle = "rgba(90,40,20,0.08)";
+    for (let i = 0; i < 90; i += 1) g.fillRect(Math.random() * 128, Math.random() * 128, 2, 2);
+  } else {
+    g.strokeStyle = "rgba(0,0,0,0.18)";
+    g.lineWidth = 1;
+    for (let y = 0; y < 128; y += 5) {
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(128, y);
+      g.stroke();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function tecido(hex, tipo, rugoso) {
+  const m = cor(hex, rugoso);
+  m.map = pano(hex, tipo);
   return m;
 }
 
 function solido(aneis, material, lados) {
   const n = lados || 6;
   const pos = [];
+  const uv = [];
+  const y0 = aneis[0].y;
+  const alto = (aneis[aneis.length - 1].y - y0) || 1;
   const ponto = (anel, k) => {
-    const a = (k / n) * Math.PI * 2;
-    return [Math.cos(a) * anel.rx, anel.y, Math.sin(a) * anel.rz + (anel.oz || 0)];
+    const kk = ((k % n) + n) % n;
+    const a = (kk / n) * Math.PI * 2;
+    return {
+      p: [Math.cos(a) * anel.rx, anel.y, Math.sin(a) * anel.rz + (anel.oz || 0)],
+      uv: [kk / n, (anel.y - y0) / alto]
+    };
   };
-  const tri = (a, b, c) => pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+  const tri = (a, b, c) => {
+    pos.push(a.p[0], a.p[1], a.p[2], b.p[0], b.p[1], b.p[2], c.p[0], c.p[1], c.p[2]);
+    uv.push(a.uv[0], a.uv[1], b.uv[0], b.uv[1], c.uv[0], c.uv[1]);
+  };
   for (let i = 0; i < aneis.length - 1; i += 1) {
     for (let k = 0; k < n; k += 1) {
       const a = ponto(aneis[i], k);
@@ -70,14 +115,15 @@ function solido(aneis, material, lados) {
       tri(b, c, d);
     }
   }
-  const baixo = [0, aneis[0].y, aneis[0].oz || 0];
-  const alto = [0, aneis[aneis.length - 1].y, aneis[aneis.length - 1].oz || 0];
+  const baixo = { p: [0, aneis[0].y, aneis[0].oz || 0], uv: [0.5, 0] };
+  const cima = { p: [0, aneis[aneis.length - 1].y, aneis[aneis.length - 1].oz || 0], uv: [0.5, 1] };
   for (let k = 0; k < n; k += 1) {
     tri(baixo, ponto(aneis[0], k + 1), ponto(aneis[0], k));
-    tri(alto, ponto(aneis[aneis.length - 1], k), ponto(aneis[aneis.length - 1], k + 1));
+    tri(cima, ponto(aneis[aneis.length - 1], k), ponto(aneis[aneis.length - 1], k + 1));
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   geo.computeVertexNormals();
   const mat = material.clone();
   mat.side = THREE.DoubleSide;
@@ -93,9 +139,9 @@ function boneco(dados) {
   const g = new THREE.Group();
   const corpo = new THREE.Group();
   g.add(corpo);
-  const pele = cor(dados.pele, 0.48);
-  const roupa = cor(dados.roupa, 0.72);
-  const calca = cor(dados.calca, 0.78);
+  const pele = tecido(dados.pele, "pele", 0.48);
+  const roupa = tecido(dados.roupa, "tecido", 0.72);
+  const calca = tecido(dados.calca, "tecido", 0.78);
   const tenis = cor(dados.tenis, 0.45);
   const sola = cor("#2a241c", 0.8);
   const cabeloMat = cor(dados.cabelo || "#241c18", 0.7);
@@ -115,57 +161,46 @@ function boneco(dados) {
   const torso = new THREE.Group();
   torso.position.y = 0.28;
   const peito = marcar(solido([
-    { y: -0.34, rx: 0.14 * largo, rz: 0.1 },
-    { y: -0.14, rx: 0.17 * largo, rz: 0.11, oz: 0.01 },
-    { y: 0.04, rx: 0.22 * largo, rz: 0.14, oz: 0.02 },
-    { y: 0.2, rx: 0.26 * largo, rz: 0.13 }
-  ], dados.regata ? pele : roupa, 8), "peito");
-  peito.position.y = 0.14;
+    { y: -0.28, rx: 0.16 * largo, rz: 0.11 },
+    { y: -0.06, rx: 0.2 * largo, rz: 0.13, oz: 0.01 },
+    { y: 0.12, rx: 0.24 * largo, rz: 0.15, oz: 0.015 },
+    { y: 0.26, rx: 0.22 * largo, rz: 0.12 }
+  ], roupa, 8), "peito");
+  peito.position.y = 0.06;
+  if (dados.regata) {
+    peito.scale.x = 0.86;
+    peito.userData.traje = "regata";
+  }
   torso.add(peito);
   if (dados.jaqueta) {
     peito.userData.traje = "jaqueta";
     const gola = solido([
-      { y: 0, rx: 0.1, rz: 0.075 },
-      { y: 0.07, rx: 0.12, rz: 0.085 }
+      { y: 0, rx: 0.11, rz: 0.08 },
+      { y: 0.06, rx: 0.13, rz: 0.09 }
     ], cor("#2c3424", 0.8), 6);
-    gola.position.set(0, 0.34, 0);
+    gola.position.set(0, 0.3, 0.02);
     gola.userData.traje = "jaqueta";
     torso.add(gola);
-    const ziper = malha(new THREE.BoxGeometry(0.028, 0.3, 0.02), cor("#e7e0d4", 0.45));
-    ziper.position.set(0, 0.12, 0.16);
+    const ziper = malha(new THREE.BoxGeometry(0.03, 0.26, 0.018), cor("#e7e0d4", 0.45));
+    ziper.position.set(0, 0.08, 0.15);
     ziper.userData.traje = "jaqueta";
     torso.add(ziper);
   }
-  if (dados.regata) {
-    const regata = solido([
-      { y: -0.2, rx: 0.11 * largo, rz: 0.1, oz: 0.02 },
-      { y: 0.02, rx: 0.14 * largo, rz: 0.12, oz: 0.035 },
-      { y: 0.16, rx: 0.1 * largo, rz: 0.09, oz: 0.02 }
-    ], roupa, 6);
-    regata.position.y = 0.12;
-    regata.userData.traje = "regata";
-    torso.add(regata);
-    [-1, 1].forEach((lado) => {
-      const alca = malha(new THREE.BoxGeometry(0.045, 0.14, 0.03), roupa);
-      alca.position.set(lado * 0.1 * largo, 0.32, 0.05);
-      alca.userData.traje = "regata";
-      torso.add(alca);
-    });
-  }
   const pescoco = solido([
-    { y: -0.14, rx: 0.075, rz: 0.065 },
-    { y: 0.12, rx: 0.06, rz: 0.055 }
-  ], pele, 6);
-  pescoco.position.y = 0.46;
+    { y: -0.24, rx: 0.15, rz: 0.12 },
+    { y: 0, rx: 0.11, rz: 0.095 },
+    { y: 0.18, rx: 0.09, rz: 0.08 }
+  ], pele, 8);
+  pescoco.position.y = 0.32;
   torso.add(pescoco);
 
   const cabeca = new THREE.Group();
-  cabeca.position.y = 0.64;
+  cabeca.position.y = 0.44;
   const cranio = solido([
-    { y: -0.12, rx: 0.07, rz: 0.06, oz: 0.02 },
-    { y: -0.04, rx: 0.12, rz: 0.1, oz: 0.015 },
-    { y: 0.06, rx: 0.145, rz: 0.12 },
-    { y: 0.15, rx: 0.08, rz: 0.07 }
+    { y: -0.16, rx: 0.08, rz: 0.07, oz: 0.02 },
+    { y: -0.04, rx: 0.125, rz: 0.11, oz: 0.012 },
+    { y: 0.07, rx: 0.145, rz: 0.12 },
+    { y: 0.16, rx: 0.08, rz: 0.07 }
   ], pele, 8);
   cabeca.add(cranio);
   const queixo = marcar(solido([
@@ -405,11 +440,21 @@ function arena() {
   cena.add(new THREE.AmbientLight(0xd5dde8, 1.05));
   const lua = new THREE.DirectionalLight(0xe7eef8, 1.45);
   lua.position.set(-4, 8, 2);
+  lua.castShadow = true;
+  lua.shadow.mapSize.set(1024, 1024);
+  lua.shadow.camera.near = 0.5;
+  lua.shadow.camera.far = 28;
+  lua.shadow.camera.left = -8;
+  lua.shadow.camera.right = 8;
+  lua.shadow.camera.top = 8;
+  lua.shadow.camera.bottom = -8;
   cena.add(lua);
 
   const chao = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshLambertMaterial({ map: texturaChao() }));
   chao.rotation.x = -Math.PI / 2;
   chao.userData.peca = "chao";
+  chao.receiveShadow = true;
+  chao.castShadow = false;
   cena.add(chao);
   [-4.2, 4.2].forEach((z) => {
     const meio = new THREE.Mesh(new THREE.BoxGeometry(14, 0.16, 0.28), cor("#7a7468", 0.86));
@@ -683,7 +728,8 @@ function garantirSom() {
 }
 
 function tocar(tipo) {
-  if (!audio) return;
+  if (!audio) garantirSom();
+  if (!audio) return false;
   const o = audio.createOscillator();
   const g = audio.createGain();
   const filtro = audio.createBiquadFilter();
@@ -708,6 +754,7 @@ function tocar(tipo) {
   g.connect(audio.destination);
   o.start(agora);
   o.stop(agora + fim + 0.02);
+  return true;
 }
 
 function lerEntrada() {
@@ -771,6 +818,68 @@ function comecar() {
   aviso.textContent = "Vai.";
 }
 
+const poeira = [];
+let sonsNoAcerto = 0;
+let graosNoAcerto = 0;
+
+function estalo(tipo, ponto) {
+  const tocou = tocar(tipo);
+  const acerto = tipo === "acerto" || tipo === "combo" || tipo === "contra";
+  if (!acerto || !ponto || !tocou) return { sons: sonsNoAcerto, graos: graosNoAcerto, vivos: poeira.length };
+  sonsNoAcerto += 1;
+  const n = 12;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(n * 3);
+  const vel = [];
+  for (let i = 0; i < n; i += 1) {
+    pos[i * 3] = ponto.x;
+    pos[i * 3 + 1] = 0.12;
+    pos[i * 3 + 2] = ponto.z;
+    vel.push({
+      x: (Math.random() - 0.5) * 1.8,
+      y: 0.35 + Math.random() * 1.1,
+      z: (Math.random() - 0.5) * 1.8
+    });
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0x9a9186,
+    size: 0.09,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false
+  }));
+  pts.userData.vida = 0.32;
+  pts.userData.vel = vel;
+  cena.add(pts);
+  poeira.push(pts);
+  graosNoAcerto += n;
+  return { sons: sonsNoAcerto, graos: graosNoAcerto, vivos: poeira.length };
+}
+
+function andarPoeira(dt) {
+  for (let i = poeira.length - 1; i >= 0; i -= 1) {
+    const pts = poeira[i];
+    pts.userData.vida -= dt;
+    const pos = pts.geometry.attributes.position;
+    pts.userData.vel.forEach((v, k) => {
+      v.y -= 3 * dt;
+      pos.setXYZ(k, pos.getX(k) + v.x * dt, pos.getY(k) + v.y * dt, pos.getZ(k) + v.z * dt);
+    });
+    pos.needsUpdate = true;
+    pts.material.opacity = Math.max(0, pts.userData.vida / 0.32);
+    if (pts.userData.vida > 0) continue;
+    cena.remove(pts);
+    pts.geometry.dispose();
+    pts.material.dispose();
+    poeira.splice(i, 1);
+  }
+}
+
+function impacto() {
+  return { sons: sonsNoAcerto, graos: graosNoAcerto, vivos: poeira.length };
+}
+
 function quadro() {
   requestAnimationFrame(quadro);
   const dt = Math.min(0.05, relogio.getDelta() || 0.016);
@@ -779,7 +888,8 @@ function quadro() {
     passo(luta, dt, lerEntrada());
     if (luta.ultimo && luta.ultimo !== ultimoSom) {
       ultimoSom = luta.ultimo;
-      tocar(luta.ultimo.tipo);
+      const corpo = luta.ultimo.alvo === luta.a.id ? luta.a : luta.b;
+      estalo(luta.ultimo.tipo, { x: corpo.x, z: corpo.z });
       tremer = 0.12;
       const rig = luta.ultimo.alvo === luta.a.id ? rigA : rigB;
       if (rig) {
@@ -802,6 +912,7 @@ function quadro() {
     colocar(rigB, { id: "nilo", x: 1.8, z: 0, yaw: -Math.PI / 2, estado: "idle", t: 0, stun: 0, lado: 1 }, null, agora);
   }
   enquadrar(dt);
+  andarPoeira(dt);
   renderer.render(cena, camera);
 }
 
@@ -967,5 +1078,7 @@ window.STREET = {
   traje,
   rosto,
   rua,
+  estalo,
+  impacto,
   escolher(id) { escolhido = id; marcarCarta(); }
 };

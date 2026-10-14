@@ -83,7 +83,9 @@ function criarLutador(dados, x, z) {
     andando: false,
     fecha: false,
     segura: false,
-    seguro: false
+    seguro: false,
+    buffer: "",
+    bufferT: 0
   };
 }
 
@@ -105,7 +107,8 @@ export function criarLuta(idJogador, semente = 1) {
     aviso: "",
     avisoT: 0,
     vencedor: "",
-    cola: null
+    cola: null,
+    trava: 0
   };
 }
 
@@ -185,11 +188,20 @@ function mover(f, entrada, dt) {
 function atualizar(f, entrada, outro, dt) {
   f.iframe = Math.max(0, f.iframe - dt);
   f.recuo = Math.max(0, f.recuo - dt);
+  const pedido = comando(f, entrada);
+  if (pedido && !podeComecar(f)) {
+    f.buffer = pedido;
+    f.bufferT = 0.16;
+  } else {
+    f.bufferT = Math.max(0, (f.bufferT || 0) - dt);
+  }
   virar(f, outro);
   if (f.estado === "ko") return;
   if (podeComecar(f)) {
-    const novo = comando(f, entrada);
+    const novo = comando(f, entrada) || (f.bufferT > 0 ? f.buffer : "");
     if (novo) {
+      f.buffer = "";
+      f.bufferT = 0;
       comecar(f, novo, entrada);
     } else if (f.estado === "cola") {
       /* fica grudado até o golpe seguinte */
@@ -360,6 +372,7 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
   alvo.noMuro = false;
   let texto = solta ? atacante.nome + " empurra." : contra ? "Contra." : combo > 1 ? "Combo " + combo + "." : atacante.nome + " acerta.";
   luta.ultimo = { tipo: contra ? "contra" : combo > 1 ? "combo" : "acerto", quem: atacante.id, alvo: alvo.id, dano };
+  if (dano > 0) luta.trava = Math.max(luta.trava || 0, solta ? 0.08 : 0.055);
   avisar(luta, texto);
 }
 
@@ -491,6 +504,15 @@ export function passo(luta, dt, entradaA, entradaB) {
   const dtOk = Math.max(0, Math.min(0.05, dt));
   luta.ultimo = null;
   if (luta.avisoT > 0) luta.avisoT = Math.max(0, luta.avisoT - dtOk);
+  if ((luta.trava || 0) > 0) {
+    luta.trava = Math.max(0, luta.trava - dtOk);
+    const pedido = comando(luta.a, entradaA || vazio());
+    if (pedido) {
+      luta.a.buffer = pedido;
+      luta.a.bufferT = 0.16;
+    }
+    return luta;
+  }
   luta.tempo = Math.max(0, luta.tempo - dtOk);
   const ea = entradaA || vazio();
   const eb = entradaB === undefined ? pensar(luta.b, luta.a, luta) : entradaB;
