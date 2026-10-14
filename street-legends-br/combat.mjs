@@ -418,13 +418,18 @@ function limitar(f, luta) {
   if (f.x < -ARENA) { f.x = -ARENA; bateu = true; }
   if (f.z > ARENA) { f.z = ARENA; bateu = true; }
   if (f.z < -ARENA) { f.z = -ARENA; bateu = true; }
-  if (!bateu || f.noMuro) return;
-  if (f.estado !== "hit" && f.estado !== "queda") return;
-  f.noMuro = true;
-  f.hp = Math.max(0, f.hp - 4);
-  f.stun += 0.15;
-  luta.ultimo = { tipo: "muro", quem: f.id, alvo: f.id, dano: 4 };
-  avisar(luta, f.nome + " no muro.");
+  if (bateu && !f.noMuro && (f.estado === "hit" || f.estado === "queda")) {
+    f.noMuro = true;
+    f.hp = Math.max(0, f.hp - 4);
+    f.stun += 0.15;
+    luta.ultimo = { tipo: "muro", quem: f.id, alvo: f.id, dano: 4 };
+    avisar(luta, f.nome + " no muro.");
+  }
+  if (f.noMuro) {
+    const dentro = ARENA - 0.45;
+    f.x = Math.max(-dentro, Math.min(dentro, f.x));
+    f.z = Math.max(-dentro, Math.min(dentro, f.z));
+  }
 }
 
 function grudar(a, b) {
