@@ -770,7 +770,10 @@ function posarRua(rig, f, agora) {
     azR = 1.6 * fora;
     azCotovelo = (1 - fora) * 1.25;
   }
-  if (s === "chute") azPernaR = -1.55 * u;
+  if (s === "chute") {
+    azPernaR = -1.55 * u;
+    axJoelhoR = (1 - u) * 1.2;
+  }
   if (s === "ombro") {
     axR = -0.85;
     axL = -0.85;
