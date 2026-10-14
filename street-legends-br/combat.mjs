@@ -32,8 +32,8 @@ export const GOLPES = {
   soco: { startup: 0.1, active: 0.08, recovery: 0.2, alcance: 1.25, raio: 0.42, dano: 9, empurra: 0.42, stun: 0.34 },
   chute: { startup: 0.16, active: 0.1, recovery: 0.28, alcance: 1.7, raio: 0.48, dano: 13, empurra: 0.72, stun: 0.4 },
   agarra: { startup: 0.12, active: 0.1, recovery: 0.36, alcance: 0.98, raio: 0.5, dano: 15, empurra: 1.45, stun: 0.5 },
-  rajada: { startup: 0.06, active: 0.07, recovery: 0.16, alcance: 1.18, raio: 0.4, dano: 7, empurra: 0.22, stun: 0.3 },
-  ombro: { startup: 0.14, active: 0.09, recovery: 0.3, alcance: 1.05, raio: 0.52, dano: 11, empurra: 1.15, stun: 0.42 }
+  rajada: { startup: 0.05, active: 0.06, recovery: 0.14, pausa: 0.08, vezes: 3, alcance: 1.22, raio: 0.42, dano: 5, empurra: 0.14, stun: 0.28 },
+  ombro: { startup: 0.14, active: 0.09, recovery: 0.3, alcance: 1.15, raio: 0.55, dano: 11, empurra: 1.4, stun: 0.42 }
 };
 
 const CORPO = 0.45;
@@ -76,6 +76,7 @@ function criarLutador(dados, x, z) {
     stun: 0,
     iframe: 0,
     conectou: false,
+    toques: 0,
     combo: 0,
     recuo: 0,
     noMuro: false,
@@ -145,6 +146,10 @@ function podeComecar(f) {
   if (f.estado === "idle" || f.estado === "walk" || f.estado === "guarda") return true;
   if (!emGolpe(f) || !f.conectou) return false;
   const g = GOLPES[f.estado];
+  if (g.vezes > 1) {
+    const ciclo = g.startup + g.active + (g.pausa || 0);
+    return f.t >= (g.vezes - 1) * ciclo + g.startup + g.active;
+  }
   return f.t >= g.startup + g.active;
 }
 
@@ -152,10 +157,19 @@ function movendo(entrada) {
   return Math.hypot(entrada.x, entrada.z) > 0.12;
 }
 
+function duracaoGolpe(g) {
+  if (g.vezes > 1) {
+    const ciclo = g.startup + g.active + (g.pausa || 0);
+    return (g.vezes - 1) * ciclo + g.startup + g.active + g.recovery;
+  }
+  return g.startup + g.active + g.recovery;
+}
+
 function comecar(f, estado, entrada) {
   f.estado = estado;
   f.t = 0;
   f.conectou = false;
+  f.toques = 0;
   f.noMuro = false;
   if (estado === "esquiva") {
     f.iframe = 0.2;
@@ -235,10 +249,11 @@ function atualizar(f, entrada, outro, dt) {
   if (emGolpe(f)) {
     f.t += dt;
     const g = GOLPES[f.estado];
-    if (f.t >= g.startup + g.active + g.recovery) {
+    if (f.t >= duracaoGolpe(g)) {
       f.estado = "idle";
       f.t = 0;
       f.conectou = false;
+      f.toques = 0;
       f.combo = 0;
       f.fecha = false;
       if (f.ia) f.recuo = 0.32;
@@ -274,7 +289,16 @@ function atualizar(f, entrada, outro, dt) {
 
 function emAtivo(f) {
   const g = GOLPES[f.estado];
-  if (!g || f.conectou) return null;
+  if (!g) return null;
+  if (g.vezes > 1) {
+    const ciclo = g.startup + g.active + (g.pausa || 0);
+    const i = Math.floor(f.t / ciclo);
+    if (i >= g.vezes || f.toques > i) return null;
+    const local = f.t - i * ciclo;
+    if (local < g.startup || local >= g.startup + g.active) return null;
+    return g;
+  }
+  if (f.conectou) return null;
   if (f.t < g.startup || f.t >= g.startup + g.active) return null;
   return g;
 }
@@ -290,6 +314,10 @@ function naFrente(defensor, atacante) {
 function emRecuperacao(f) {
   const g = GOLPES[f.estado];
   if (!g || f.conectou) return false;
+  if (g.vezes > 1) {
+    const ciclo = g.startup + g.active + (g.pausa || 0);
+    return f.t >= (g.vezes - 1) * ciclo + g.startup + g.active;
+  }
   return f.t >= g.startup + g.active;
 }
 
@@ -305,7 +333,14 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
   };
   const d = Math.hypot(ponto.x - alvo.x, ponto.z - alvo.z);
   if (d > g.raio + CORPO) return;
-  atacante.conectou = true;
+  if (g.vezes > 1) {
+    const ciclo = g.startup + g.active + (g.pausa || 0);
+    const i = Math.min(g.vezes - 1, Math.floor(atacante.t / ciclo));
+    atacante.toques = i + 1;
+    atacante.conectou = atacante.toques >= g.vezes;
+  } else {
+    atacante.conectou = true;
+  }
   if (alvo.iframe > 0) {
     luta.ultimo = { tipo: "esquiva", quem: atacante.id, alvo: alvo.id, dano: 0 };
     avisar(luta, alvo.nome + " sai.");
@@ -370,7 +405,7 @@ function aplicarAcerto(atacante, alvo, tipo, g, luta) {
     alvo.conectou = false;
   }
   alvo.noMuro = false;
-  let texto = solta ? atacante.nome + " empurra." : contra ? "Contra." : combo > 1 ? "Combo " + combo + "." : atacante.nome + " acerta.";
+  let texto = solta || tipo === "ombro" ? atacante.nome + " empurra." : contra ? "Contra." : combo > 1 ? "Combo " + combo + "." : atacante.nome + " acerta.";
   luta.ultimo = { tipo: contra ? "contra" : combo > 1 ? "combo" : "acerto", quem: atacante.id, alvo: alvo.id, dano };
   if (dano > 0) luta.trava = Math.max(luta.trava || 0, solta ? 0.08 : 0.055);
   avisar(luta, texto);

@@ -474,7 +474,16 @@ function animar(rig, f) {
     const d = acao.getClip().duration;
     const golpe = GOLPES[f.estado];
     let u = Math.min(1, f.t / Math.max(0.25, d));
-    if (golpe && f.t >= golpe.startup) u = Math.min(0.72, 0.34 + (f.t - golpe.startup) * 2);
+    if (f.estado === "rajada" && golpe && golpe.vezes > 1) {
+      const ciclo = golpe.startup + golpe.active + (golpe.pausa || 0);
+      const local = f.t - Math.floor(f.t / ciclo) * ciclo;
+      const meio = golpe.startup + golpe.active;
+      u = local < meio ? Math.min(0.55, (local / meio) * 0.5) : 0.12;
+    } else if (f.estado === "ombro" && golpe) {
+      u = f.t < golpe.startup ? (f.t / Math.max(0.01, golpe.startup)) * 0.2 : Math.min(0.62, 0.3 + (f.t - golpe.startup));
+    } else if (golpe && f.t >= golpe.startup) {
+      u = Math.min(0.72, 0.34 + (f.t - golpe.startup) * 2);
+    }
     if (nome === "Death_A") u = Math.min(1, f.t / 0.28);
     acao.time = Math.min(Math.max(0, d - 0.02), Math.max(0, u * d));
     rig.mixer.update(0);
