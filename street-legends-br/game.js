@@ -409,18 +409,28 @@ function pessoa(dados) {
   corpo.scale.setScalar(escala);
   corpo.position.y = -caixa.min.y * escala;
   g.add(corpo);
-  const mixer = new THREE.AnimationMixer(corpo);
-  const clips = {};
-  origem.animations.forEach((clip) => {
-    const acao = mixer.clipAction(clip);
-    const loop = EM_LOOP.has(clip.name);
-    acao.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
-    acao.clampWhenFinished = !loop;
-    clips[clip.name] = acao;
+  const ossos = {};
+  const repouso = new Map();
+  corpo.traverse((obj) => {
+    if (!obj.isBone || !obj.name) return;
+    const nome = obj.name.replace(/\./g, "");
+    ossos[nome] = obj;
+    repouso.set(nome, obj.quaternion.clone());
   });
-  let maoOsso = null;
-  let peOsso = null;
-  let cabeca = null;
+  const mixer = origem.animations.length ? new THREE.AnimationMixer(corpo) : null;
+  const clips = {};
+  if (mixer) {
+    origem.animations.forEach((clip) => {
+      const acao = mixer.clipAction(clip);
+      const loop = EM_LOOP.has(clip.name);
+      acao.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+      acao.clampWhenFinished = !loop;
+      clips[clip.name] = acao;
+    });
+  }
+  let maoOsso = ossos.HandR || ossos.handr || null;
+  let peOsso = ossos.FootR || ossos.footr || null;
+  let cabeca = ossos.Head || ossos.head || null;
   corpo.traverse((obj) => {
     if (obj.isMesh && obj.material) {
       const lista = Array.isArray(obj.material) ? obj.material : [obj.material];
@@ -433,10 +443,10 @@ function pessoa(dados) {
       obj.castShadow = true;
       obj.receiveShadow = true;
     }
-    if (obj.name === "handr" || obj.name === "hand.r") maoOsso = obj;
-    if ((obj.name === "footr" || obj.name === "foot.r") && !peOsso) peOsso = obj;
+    if (obj.name === "handr" || obj.name === "hand.r" || obj.name === "HandR" || obj.name === "Hand.R") maoOsso = obj;
+    if ((obj.name === "footr" || obj.name === "foot.r" || obj.name === "FootR" || obj.name === "Foot.R") && !peOsso) peOsso = obj;
     if (obj.name === "toesr" || obj.name === "toes.r") peOsso = obj;
-    if (obj.name === "head") cabeca = obj;
+    if (obj.name === "head" || obj.name === "Head") cabeca = obj;
   });
   const nariz = new THREE.Object3D();
   nariz.position.set(0, 0.05, 0.18);
@@ -450,7 +460,7 @@ function pessoa(dados) {
   anel.position.y = 0.02;
   g.add(anel);
   return {
-    g, corpo, mixer, clips, acao: null, acaoNome: "",
+    g, corpo, mixer, clips, ossos, repouso, acao: null, acaoNome: "",
     mao: maoOsso, pe: peOsso, cabeca, nariz,
     careca: !!dados.careca, flash: 0, gente: true
   };
@@ -704,6 +714,88 @@ function curva(f) {
   return Math.max(0, 1 - r);
 }
 
+const eixoPose = new THREE.Euler();
+const giroPose = new THREE.Quaternion();
+
+function dobrar(rig, nome, x, y, z) {
+  const osso = rig.ossos[nome];
+  const base = osso && rig.repouso.get(nome);
+  if (!osso || !base) return;
+  osso.quaternion.copy(base);
+  if (!x && !y && !z) return;
+  eixoPose.set(x, y, z);
+  giroPose.setFromEuler(eixoPose);
+  osso.quaternion.multiply(giroPose);
+}
+
+function repousar(rig) {
+  rig.repouso.forEach((q, nome) => {
+    const osso = rig.ossos[nome];
+    if (osso) osso.quaternion.copy(q);
+  });
+}
+
+function posarRua(rig, f, agora) {
+  repousar(rig);
+  rig.acaoNome = f.estado === "hit" ? "hit" : (f.estado || "");
+  const s = f.estado;
+  const u = curva(f);
+  const w = Math.sin((agora || 0) * 8 + (f.x || 0));
+  let axR = -1.55;
+  let axL = -1.55;
+  let azR = 0;
+  let azL = 0;
+  let pernaR = 0;
+  let pernaL = 0;
+  let azPerna = 0;
+  if (s === "walk") {
+    axR = -1.55 + w * 0.4;
+    axL = -1.55 - w * 0.4;
+    pernaR = -w * 0.45;
+    pernaL = w * 0.45;
+  }
+  if (s === "soco" || s === "rajada" || s === "agarra") {
+    let fora = u;
+    if (s === "rajada") {
+      const g = GOLPES.rajada;
+      const ciclo = g.startup + g.active + (g.pausa || 0);
+      const local = f.t - Math.floor(f.t / Math.max(0.01, ciclo)) * ciclo;
+      fora = local < g.startup + g.active ? Math.min(1, local / (g.startup + g.active)) : 0.15;
+    }
+    axR = -1.55 * (1 - fora) - 0.2 * fora;
+    azR = 1.6 * fora;
+  }
+  if (s === "chute") azPerna = -1.55 * u;
+  if (s === "ombro") {
+    axR = -0.85;
+    axL = -0.85;
+    azR = 0.55 * u;
+    azL = -0.55 * u;
+    dobrar(rig, "Abdomen", 0.4 * u, 0, 0);
+  }
+  if (s === "guarda") {
+    axR = -0.45;
+    axL = -0.45;
+    azR = 0.9;
+    azL = -0.9;
+  }
+  if (s === "hit") {
+    const k = pesoDoAcerto(f.t, f.stun || 0.52);
+    dobrar(rig, "Abdomen", 0.7 * k, 0, 0);
+    dobrar(rig, "Chest", 0.3 * k, 0, 0);
+  }
+  dobrar(rig, "UpperArmR", axR, 0, azR);
+  dobrar(rig, "UpperArmL", axL, 0, azL);
+  dobrar(rig, "UpperLegR", pernaR, 0, azPerna);
+  dobrar(rig, "UpperLegL", pernaL, 0, 0);
+  if (s === "queda" || s === "ko") {
+    rig.corpo.rotation.x = Math.min(1, f.t / 0.28) * 1.55;
+  } else {
+    rig.corpo.rotation.x = 0;
+  }
+  if (s === "esquiva") dobrar(rig, "Abdomen", 0.3, 0, (f.lado || 1) * 0.4);
+}
+
 function posar(rig, f, agora) {
   zerar(rig);
   const s = f.estado;
@@ -837,7 +929,8 @@ function colocar(rig, f, outro, agora) {
   rig.g.position.set(f.x, 0, f.z);
   rig.g.rotation.y = f.yaw;
   if (rig.gente) {
-    animar(rig, f);
+    if (rig.mixer) animar(rig, f);
+    else posarRua(rig, f, agora);
     if (f.estado === "queda" || f.estado === "ko") {
       let baixo = Infinity;
       rig.corpo.traverse((obj) => {
@@ -1170,8 +1263,8 @@ window.addEventListener("resize", tamanho);
 
 arena();
 const loader = new GLTFLoader();
-gltfKadu = await loader.loadAsync("./vendor/Rogue.glb");
-gltfNilo = await loader.loadAsync("./vendor/Barbarian.glb");
+gltfKadu = await loader.loadAsync("./vendor/Casual2.glb");
+gltfNilo = await loader.loadAsync("./vendor/Punk.glb");
 usar(ELENCO[0], ELENCO[1]);
 tamanho();
 requestAnimationFrame(quadro);
