@@ -80,6 +80,7 @@ function criarLutador(dados, x, z) {
     combo: 0,
     recuo: 0,
     noMuro: false,
+    noChao: false,
     lado: 1,
     andando: false,
     fecha: false,
@@ -483,10 +484,19 @@ function encerrar(luta) {
   if (luta.a.hp > luta.b.hp) {
     luta.fase = "vitoria";
     luta.vencedor = luta.a.nome;
+    deitar(luta.b);
   } else {
     luta.fase = "derrota";
     luta.vencedor = luta.b.nome;
+    deitar(luta.a);
   }
+}
+
+function deitar(f) {
+  f.noChao = true;
+  if (f.estado === "ko" || f.estado === "queda") return;
+  f.estado = "ko";
+  f.t = 0;
 }
 
 export function pensar(eu, outro, luta) {
@@ -573,7 +583,7 @@ export function assentar(luta, dt) {
   if (!luta || luta.fase === "luta") return luta;
   const dtOk = Math.max(0, Math.min(0.05, dt || 0));
   for (const f of [luta.a, luta.b]) {
-    if (f.hp > 0) {
+    if (f.hp > 0 && !f.noChao) {
       if (f.estado !== "idle" && f.estado !== "walk") {
         f.estado = "idle";
         f.t = 0;

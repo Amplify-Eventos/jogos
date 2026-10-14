@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { ELENCO, GOLPES, criarLuta, passo, assentar, vazio } from "./combat.mjs";
+import { ELENCO, GOLPES, criarLuta, passo, assentar, vazio } from "./combat.mjs?v=0.23";
 import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { clone } from "./vendor/SkeletonUtils.js";
 
