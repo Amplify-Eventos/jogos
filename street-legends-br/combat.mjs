@@ -236,11 +236,11 @@ function atualizar(f, entrada, outro, dt) {
   if (f.estado === "esquiva") {
     const dirX = Math.cos(f.yaw);
     const dirZ = -Math.sin(f.yaw);
-    const sp = 5.4 * f.ajuste.velocidade;
+    const sp = 2.7 * f.ajuste.velocidade;
     f.x += dirX * f.lado * sp * dt;
     f.z += dirZ * f.lado * sp * dt;
     f.t += dt;
-    if (f.t >= 0.36) {
+    if (f.t >= 0.28) {
       f.estado = "idle";
       f.t = 0;
       f.iframe = 0;
