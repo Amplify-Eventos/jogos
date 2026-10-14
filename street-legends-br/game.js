@@ -761,7 +761,7 @@ function posarRua(rig, f, agora) {
     axJoelhoR = Math.max(0, w) * 1.15;
     axJoelhoL = Math.max(0, -w) * 1.15;
   }
-  if (s === "soco" || s === "rajada" || s === "agarra") {
+  if (s === "soco" || s === "rajada") {
     let fora = u;
     if (s === "rajada") {
       const g = GOLPES.rajada;
@@ -786,6 +786,16 @@ function posarRua(rig, f, agora) {
   if (s === "chute") {
     azPernaR = -1.55 * u;
     axJoelhoR = (1 - u) * 1.2;
+  }
+  if (s === "agarra" || s === "cola") {
+    const k = s === "cola" ? 1 : Math.max(u, 0.35);
+    axR = -0.2;
+    axL = -0.2;
+    azR = 1.35 * k;
+    azL = -1.35 * k;
+    azCotovelo = 1.2 * k;
+    azCotoveloL = -1.2 * k;
+    dobrar(rig, "Abdomen", 0.45 * k, 0, 0);
   }
   if (s === "ombro") {
     axR = -0.85;
