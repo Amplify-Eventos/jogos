@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { ELENCO, GOLPES, criarLuta, passo, vazio } from "./combat.mjs";
+import { GLTFLoader } from "./vendor/GLTFLoader.js";
+import { clone } from "./vendor/SkeletonUtils.js";
 
 const tela = document.getElementById("tela");
 const hud = document.getElementById("hud");
@@ -29,6 +31,9 @@ const olhar = new THREE.Vector3();
 const frenteCam = new THREE.Vector3();
 const direitaCam = new THREE.Vector3();
 
+let passoDt = 0.016;
+let gltfKadu = null;
+let gltfNilo = null;
 let luta = null;
 let escolhido = "kadu";
 let rigA = null;
@@ -135,6 +140,39 @@ function marcar(mesh, parte) {
   return mesh;
 }
 
+function superficie(grelha, material) {
+  const pos = [];
+  const n = grelha[0].length;
+  const por = (p) => pos.push(p[0], p[1], p[2]);
+  for (let j = 0; j < grelha.length - 1; j += 1) {
+    for (let i = 0; i < n - 1; i += 1) {
+      const a = grelha[j][i];
+      const b = grelha[j][i + 1];
+      const c = grelha[j + 1][i];
+      const d = grelha[j + 1][i + 1];
+      por(a); por(c); por(b);
+      por(b); por(c); por(d);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  const mat = material.clone();
+  mat.side = THREE.DoubleSide;
+  return malha(geo, mat);
+}
+
+function filaRosto(y, rx, z, nariz) {
+  const u = [-1, -0.7, -0.34, 0, 0.34, 0.7, 1];
+  return u.map((t) => {
+    const lado = Math.abs(t);
+    const x = t * rx * (t === -1 || t === 1 ? 1.08 : 1);
+    let zz = z * (1 - lado * 0.42);
+    if (t === 0) zz += nariz || 0;
+    return [x, y, zz];
+  });
+}
+
 function boneco(dados) {
   const g = new THREE.Group();
   const corpo = new THREE.Group();
@@ -178,68 +216,60 @@ function boneco(dados) {
       { y: 0, rx: 0.11, rz: 0.08 },
       { y: 0.06, rx: 0.13, rz: 0.09 }
     ], cor("#2c3424", 0.8), 6);
-    gola.position.set(0, 0.3, 0.02);
+    gola.position.set(0, 0.28, 0.02);
     gola.userData.traje = "jaqueta";
     torso.add(gola);
-    const ziper = malha(new THREE.BoxGeometry(0.03, 0.26, 0.018), cor("#e7e0d4", 0.45));
-    ziper.position.set(0, 0.08, 0.15);
-    ziper.userData.traje = "jaqueta";
-    torso.add(ziper);
   }
-  const pescoco = solido([
-    { y: -0.24, rx: 0.15, rz: 0.12 },
-    { y: 0, rx: 0.11, rz: 0.095 },
-    { y: 0.18, rx: 0.09, rz: 0.08 }
-  ], pele, 8);
-  pescoco.position.y = 0.32;
-  torso.add(pescoco);
 
   const cabeca = new THREE.Group();
-  cabeca.position.y = 0.44;
-  const cranio = solido([
-    { y: -0.16, rx: 0.08, rz: 0.07, oz: 0.02 },
-    { y: -0.04, rx: 0.125, rz: 0.11, oz: 0.012 },
-    { y: 0.07, rx: 0.145, rz: 0.12 },
-    { y: 0.16, rx: 0.08, rz: 0.07 }
-  ], pele, 8);
-  cabeca.add(cranio);
-  const queixo = marcar(solido([
-    { y: 0, rx: 0.03, rz: 0.02 },
-    { y: 0.045, rx: 0.055, rz: 0.035, oz: 0.012 }
-  ], pele, 5), "queixo");
-  queixo.position.set(0, -0.1, 0.08);
-  queixo.rotation.x = -0.45;
-  cabeca.add(queixo);
+  cabeca.position.y = 0.42;
+  const frente = [
+    filaRosto(-0.22, 0.07, 0.05, 0),
+    filaRosto(-0.14, 0.075, 0.09, 0.02),
+    filaRosto(-0.08, 0.086, 0.1, 0.015),
+    filaRosto(-0.02, 0.09, 0.1, 0.055),
+    filaRosto(0.035, 0.098, 0.09, 0.01),
+    filaRosto(0.08, 0.1, 0.11, 0.02),
+    filaRosto(0.15, 0.078, 0.04, 0)
+  ];
+  const tras = frente.map((linha) => linha.map((p) => [p[0] * 0.92, p[1], -Math.max(0.03, p[2] * 0.75)]));
+  const rostoMesh = marcar(superficie(frente, pele), "queixo");
+  const nuca = superficie(tras, pele);
+  cabeca.add(rostoMesh);
+  cabeca.add(nuca);
+  for (let j = 0; j < frente.length - 1; j += 1) {
+    const anel = [
+      frente[j][0], tras[j][0], tras[j + 1][0], frente[j + 1][0]
+    ];
+    const anelD = [
+      frente[j][6], frente[j + 1][6], tras[j + 1][6], tras[j][6]
+    ];
+    cabeca.add(superficie([anel.slice(0, 2), anel.slice(2)], pele));
+    cabeca.add(superficie([anelD.slice(0, 2), anelD.slice(2)], pele));
+  }
+  cabeca.add(superficie([frente[frente.length - 1], tras[tras.length - 1]], pele));
   [-1, 1].forEach((lado) => {
-    const olho = malha(new THREE.BoxGeometry(0.03, 0.016, 0.012), olhoMat);
-    olho.position.set(lado * 0.05, 0.02, 0.12);
+    const olho = malha(new THREE.BoxGeometry(0.028, 0.012, 0.008), olhoMat);
+    olho.position.set(lado * 0.038, 0.04, 0.1);
     cabeca.add(olho);
   });
-  const nariz = solido([
-    { y: 0, rx: 0.012, rz: 0.012 },
-    { y: 0.04, rx: 0.02, rz: 0.016 }
-  ], pele, 4);
-  nariz.position.set(0, -0.03, 0.12);
-  nariz.rotation.x = 1.1;
+  const boca = malha(new THREE.BoxGeometry(0.046, 0.01, 0.008), olhoMat);
+  boca.position.set(0, -0.075, 0.112);
+  cabeca.add(boca);
+  const nariz = new THREE.Object3D();
+  nariz.position.set(0, -0.01, 0.16);
   nariz.userData.parte = "rosto";
   cabeca.add(nariz);
   if (dados.careca) {
-    const sobrancelha = malha(new THREE.BoxGeometry(0.14, 0.018, 0.016), cabeloMat);
-    sobrancelha.position.set(0, 0.06, 0.12);
-    cabeca.add(sobrancelha);
-    cranio.userData.traje = "careca";
+    rostoMesh.userData.traje = "careca";
   } else {
-    const pelo = solido([
-      { y: 0, rx: 0.15, rz: 0.14 },
-      { y: 0.05, rx: 0.155, rz: 0.145 },
-      { y: 0.11, rx: 0.08, rz: 0.07 }
-    ], cabeloMat, 8);
-    pelo.position.y = 0.05;
+    const pelo = superficie([
+      filaRosto(0.06, 0.11, 0.12, 0),
+      filaRosto(0.12, 0.12, 0.08, 0),
+      filaRosto(0.18, 0.06, 0.02, 0)
+    ], cabeloMat);
     pelo.userData.traje = "cabelo";
     cabeca.add(pelo);
-    const brinco = malha(new THREE.BoxGeometry(0.012, 0.04, 0.012), cor("#e0b15a", 0.35));
-    brinco.position.set(-0.15, -0.05, 0.02);
-    cabeca.add(brinco);
   }
   torso.add(cabeca);
   hips.add(torso);
@@ -343,11 +373,121 @@ function pintar(rig, claro) {
   });
 }
 
+const CLIP = {
+  idle: "Unarmed_Idle",
+  walk: "Walking_A",
+  soco: "Unarmed_Melee_Attack_Punch_A",
+  rajada: "Unarmed_Melee_Attack_Punch_B",
+  chute: "Unarmed_Melee_Attack_Kick",
+  agarra: "Unarmed_Melee_Attack_Punch_B",
+  cola: "Unarmed_Idle",
+  ombro: "2H_Melee_Attack_Chop",
+  guarda: "Block",
+  esquiva: "Dodge_Backward",
+  hit: "Hit_A",
+  queda: "Death_A",
+  ko: "Death_A",
+  levanta: "Unarmed_Idle"
+};
+const EM_LOOP = new Set([
+  "Unarmed_Idle", "Idle", "Walking_A", "Walking_B", "Walking_C",
+  "Walking_Backwards", "Running_A", "Running_B", "Block", "Blocking"
+]);
+
+function pessoa(dados) {
+  const origem = dados.id === "nilo" ? gltfNilo : gltfKadu;
+  const g = new THREE.Group();
+  const corpo = clone(origem.scene);
+  corpo.rotation.y = 0;
+  corpo.traverse((obj) => {
+    if (obj.name === "Knife_Offhand" || obj.name === "1H_Crossbow" || obj.name === "2H_Crossbow" || obj.name === "Knife" || obj.name === "Throwable" || obj.name === "1H_Axe_Offhand" || obj.name === "1H_Axe" || obj.name === "2H_Axe" || obj.name === "Mug" || obj.name === "Barbarian_Round_Shield") obj.visible = false;
+  });
+  corpo.updateMatrixWorld(true);
+  const caixa = new THREE.Box3().setFromObject(corpo);
+  const alto = caixa.max.y - caixa.min.y || 1;
+  const escala = 1.8 / alto;
+  corpo.scale.setScalar(escala);
+  corpo.position.y = -caixa.min.y * escala;
+  g.add(corpo);
+  const mixer = new THREE.AnimationMixer(corpo);
+  const clips = {};
+  origem.animations.forEach((clip) => {
+    const acao = mixer.clipAction(clip);
+    const loop = EM_LOOP.has(clip.name);
+    acao.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+    acao.clampWhenFinished = !loop;
+    clips[clip.name] = acao;
+  });
+  let maoOsso = null;
+  let peOsso = null;
+  let cabeca = null;
+  corpo.traverse((obj) => {
+    if (obj.isMesh && obj.material) {
+      const lista = Array.isArray(obj.material) ? obj.material : [obj.material];
+      const novos = lista.map((m) => {
+        const c = m.clone();
+        if (c.emissive) c.emissive.setHex(0x000000);
+        return c;
+      });
+      obj.material = Array.isArray(obj.material) ? novos : novos[0];
+      obj.castShadow = true;
+      obj.receiveShadow = true;
+    }
+    if (obj.name === "handr" || obj.name === "hand.r") maoOsso = obj;
+    if ((obj.name === "footr" || obj.name === "foot.r") && !peOsso) peOsso = obj;
+    if (obj.name === "toesr" || obj.name === "toes.r") peOsso = obj;
+    if (obj.name === "head") cabeca = obj;
+  });
+  const nariz = new THREE.Object3D();
+  nariz.position.set(0, 0.05, 0.18);
+  if (cabeca) cabeca.add(nariz);
+  g.userData.traje = dados.careca ? "careca" : (dados.jaqueta ? "jaqueta" : "regata");
+  const anel = new THREE.Mesh(
+    new THREE.RingGeometry(0.38, 0.46, 24),
+    new THREE.MeshBasicMaterial({ color: dados.roupa, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
+  );
+  anel.rotation.x = -Math.PI / 2;
+  anel.position.y = 0.02;
+  g.add(anel);
+  return {
+    g, corpo, mixer, clips, acao: null, acaoNome: "",
+    mao: maoOsso, pe: peOsso, cabeca, nariz,
+    careca: !!dados.careca, flash: 0, gente: true
+  };
+}
+
+function animar(rig, f) {
+  const nome = CLIP[f.estado] || "Unarmed_Idle";
+  const acao = rig.clips[nome] || rig.clips.Unarmed_Idle;
+  if (!acao) return;
+  if (rig.acaoNome !== nome) {
+    if (rig.acao) rig.acao.stop();
+    acao.reset();
+    acao.enabled = true;
+    acao.setEffectiveWeight(1);
+    acao.play();
+    rig.acao = acao;
+    rig.acaoNome = nome;
+  }
+  const loop = EM_LOOP.has(nome);
+  if (!loop) {
+    const d = acao.getClip().duration;
+    const golpe = GOLPES[f.estado];
+    let u = Math.min(1, f.t / Math.max(0.25, d));
+    if (golpe && f.t >= golpe.startup) u = Math.min(0.72, 0.34 + (f.t - golpe.startup) * 2);
+    if (nome === "Death_A") u = Math.min(1, f.t / 0.28);
+    acao.time = Math.min(Math.max(0, d - 0.02), Math.max(0, u * d));
+    rig.mixer.update(0);
+  } else {
+    rig.mixer.update(passoDt);
+  }
+}
+
 function usar(dadosA, dadosB) {
   if (rigA) cena.remove(rigA.g);
   if (rigB) cena.remove(rigB.g);
-  rigA = boneco(dadosA);
-  rigB = boneco(dadosB);
+  rigA = pessoa(dadosA);
+  rigB = pessoa(dadosB);
   cena.add(rigA.g);
   cena.add(rigB.g);
 }
@@ -653,7 +793,7 @@ function avancar(rig, f, outro) {
   const dz = outro.z - f.z;
   const dist = Math.hypot(dx, dz);
   if (dist < 0.2) return;
-  const membro = f.estado === "chute" ? 0.9 : 0.5;
+  const membro = f.estado === "chute" ? 0.7 : 0.5;
   const falta = dist - membro - 0.15;
   if (falta <= 0) return;
   const cabe = dist <= g.alcance + 0.55;
@@ -667,15 +807,47 @@ function virarRosto(rig, f, outro) {
   const dx = outro.x - f.x;
   const dz = outro.z - f.z;
   if (dx * dx + dz * dz < 0.04) return;
-  let diff = Math.atan2(dx, dz) - f.yaw - rig.torso.rotation.y;
+  let diff = Math.atan2(dx, dz) - f.yaw - (rig.torso ? rig.torso.rotation.y : 0);
   while (diff > Math.PI) diff -= Math.PI * 2;
   while (diff < -Math.PI) diff += Math.PI * 2;
-  rig.cabeca.rotation.y = Math.max(-1.05, Math.min(1.05, diff));
+  const giro = Math.max(-1.05, Math.min(1.05, diff));
+  if (rig.gente) {
+    rig.cabeca.rotateY(giro);
+    const frente = new THREE.Vector3(Math.sin(f.yaw + giro), 0, Math.cos(f.yaw + giro));
+    const base = new THREE.Vector3();
+    rig.cabeca.getWorldPosition(base);
+    base.addScaledVector(frente, 0.22);
+    rig.nariz.parent.worldToLocal(base);
+    rig.nariz.position.copy(base);
+    return;
+  }
+  rig.cabeca.rotation.y = giro;
 }
 
 function colocar(rig, f, outro, agora) {
   rig.g.position.set(f.x, 0, f.z);
   rig.g.rotation.y = f.yaw;
+  if (rig.gente) {
+    animar(rig, f);
+    if (f.estado === "queda" || f.estado === "ko") {
+      let baixo = Infinity;
+      rig.corpo.traverse((obj) => {
+        if (!ossoDeCorpo(obj)) return;
+        const p = new THREE.Vector3();
+        obj.getWorldPosition(p);
+        if (p.y < baixo) baixo = p.y;
+      });
+      if (baixo < 0.12) rig.g.position.y += 0.12 - baixo;
+    }
+    avancar(rig, f, outro);
+    virarRosto(rig, f, outro);
+    if (rig.flash > 0) {
+      pintar(rig, true);
+      rig.flash = Math.max(0, rig.flash - 0.016);
+      if (rig.flash === 0) pintar(rig, false);
+    }
+    return;
+  }
   posar(rig, f, agora);
   virarRosto(rig, f, outro);
   avancar(rig, f, outro);
@@ -883,6 +1055,7 @@ function impacto() {
 function quadro() {
   requestAnimationFrame(quadro);
   const dt = Math.min(0.05, relogio.getDelta() || 0.016);
+  passoDt = dt;
   const agora = relogio.elapsedTime;
   if (luta && luta.fase === "luta") {
     passo(luta, dt, lerEntrada());
@@ -985,6 +1158,9 @@ document.getElementById("de-novo").onclick = () => comecar();
 window.addEventListener("resize", tamanho);
 
 arena();
+const loader = new GLTFLoader();
+gltfKadu = await loader.loadAsync("./vendor/Rogue.glb");
+gltfNilo = await loader.loadAsync("./vendor/Barbarian.glb");
 usar(ELENCO[0], ELENCO[1]);
 tamanho();
 requestAnimationFrame(quadro);
@@ -1003,18 +1179,27 @@ function silhueta(quem) {
   const partes = {};
   let cilindro = 0;
   let esfera = 0;
+  let skinned = 0;
   rig.g.traverse((obj) => {
+    if (obj.isSkinnedMesh) skinned += 1;
     if (obj.userData && obj.userData.parte) partes[obj.userData.parte] = (partes[obj.userData.parte] || 0) + 1;
     if (!obj.geometry) return;
     if (obj.geometry.type === "CylinderGeometry") cilindro += 1;
     if (obj.geometry.type === "SphereGeometry") esfera += 1;
   });
-  return { partes, cilindro, esfera };
+  return { partes, cilindro, esfera, skinned };
 }
 
 function dobra(quem) {
   const rig = quem === "b" ? rigB : rigA;
   const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
+  if (rig.gente) {
+    return {
+      k: pesoDoAcerto(f ? f.t : 0, f ? f.stun : 0.52),
+      clip: rig.acaoNome || "",
+      gente: true
+    };
+  }
   return {
     k: pesoDoAcerto(f ? f.t : 0, f ? f.stun : 0.52),
     torso: rig.torso.rotation.x,
@@ -1031,7 +1216,7 @@ function traje(quem) {
   rig.g.traverse((obj) => {
     if (obj.userData && obj.userData.traje && !marcas.includes(obj.userData.traje)) marcas.push(obj.userData.traje);
   });
-  return { marcas, careca: !!rig.careca };
+  return { marcas, careca: !!rig.careca, gente: !!rig.gente };
 }
 
 function rosto(quem) {
@@ -1048,17 +1233,34 @@ function rosto(quem) {
 
 function mao(quem) {
   const rig = quem === "b" ? rigB : rigA;
-  return pontoDe(quem, rig.bracoR.mao);
+  return pontoDe(quem, rig.gente ? rig.mao : rig.bracoR.mao);
 }
 
 function pe(quem) {
   const rig = quem === "b" ? rigB : rigA;
-  return pontoDe(quem, rig.pernaR.pe);
+  return pontoDe(quem, rig.gente ? rig.pe : rig.pernaR.pe);
+}
+
+function ossoDeCorpo(obj) {
+  if (!obj.isBone || !obj.name) return false;
+  if (/ik|control|slot/i.test(obj.name)) return false;
+  return true;
 }
 
 function medida(quem) {
   const rig = quem === "b" ? rigB : rigA;
-  const caixa = new THREE.Box3().setFromObject(rig.g);
+  const caixa = new THREE.Box3();
+  if (rig.gente) {
+    rig.corpo.traverse((obj) => {
+      if (!ossoDeCorpo(obj)) return;
+      const p = new THREE.Vector3();
+      obj.getWorldPosition(p);
+      caixa.expandByPoint(p);
+    });
+    caixa.expandByScalar(0.08);
+  } else {
+    caixa.setFromObject(rig.g);
+  }
   return {
     minX: caixa.min.x, maxX: caixa.max.x,
     minY: caixa.min.y, maxY: caixa.max.y,
