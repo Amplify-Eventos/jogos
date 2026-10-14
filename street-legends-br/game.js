@@ -932,9 +932,19 @@ function virarRosto(rig, f, outro) {
   rig.cabeca.rotation.y = giro;
 }
 
+function poeiraDoChao(rig, f) {
+  const noChao = (f.estado === "queda" || f.estado === "ko") && f.t >= 0.28;
+  if (noChao && !rig.poeiraChao) {
+    rig.poeiraChao = true;
+    estalo("chao", { x: f.x, z: f.z });
+  }
+  if (!noChao) rig.poeiraChao = false;
+}
+
 function colocar(rig, f, outro, agora) {
   rig.g.position.set(f.x, 0, f.z);
   rig.g.rotation.y = f.yaw;
+  poeiraDoChao(rig, f);
   if (rig.gente) {
     if (rig.mixer) animar(rig, f);
     else posarRua(rig, f, agora);
@@ -1022,6 +1032,7 @@ function tocar(tipo) {
   if (tipo === "guarda") { freq = 220; fim = 0.08; }
   if (tipo === "esquiva") { freq = 420; fim = 0.1; tipoOnda = "triangle"; }
   if (tipo === "muro") { freq = 70; fim = 0.18; }
+  if (tipo === "chao") { freq = 55; fim = 0.22; }
   o.type = tipoOnda;
   o.frequency.setValueAtTime(freq, agora);
   o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * 0.6), agora + fim);
@@ -1105,7 +1116,7 @@ let graosNoAcerto = 0;
 
 function estalo(tipo, ponto) {
   const tocou = tocar(tipo);
-  const acerto = tipo === "acerto" || tipo === "combo" || tipo === "contra";
+  const acerto = tipo === "acerto" || tipo === "combo" || tipo === "contra" || tipo === "chao";
   if (!acerto || !ponto || !tocou) return { sons: sonsNoAcerto, graos: graosNoAcerto, vivos: poeira.length };
   sonsNoAcerto += 1;
   const n = 12;
