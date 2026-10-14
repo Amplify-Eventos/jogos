@@ -747,11 +747,15 @@ function posarRua(rig, f, agora) {
   let azL = 0;
   let azPernaR = 0;
   let azPernaL = 0;
+  let axJoelhoR = 0;
+  let axJoelhoL = 0;
   if (s === "walk") {
     azR = -w * 0.4;
     azL = w * 0.4;
-    azPernaR = -w * 0.8;
-    azPernaL = w * 0.8;
+    azPernaR = -w * 0.55;
+    azPernaL = w * 0.55;
+    axJoelhoR = Math.max(0, w) * 1.15;
+    axJoelhoL = Math.max(0, -w) * 1.15;
   }
   if (s === "soco" || s === "rajada" || s === "agarra") {
     let fora = u;
@@ -787,6 +791,8 @@ function posarRua(rig, f, agora) {
   dobrar(rig, "UpperArmL", axL, 0, azL);
   dobrar(rig, "UpperLegR", 0, 0, azPernaR);
   dobrar(rig, "UpperLegL", 0, 0, azPernaL);
+  dobrar(rig, "LowerLegR", axJoelhoR, 0, 0);
+  dobrar(rig, "LowerLegL", axJoelhoL, 0, 0);
   if (s === "queda" || s === "ko") {
     rig.corpo.rotation.x = Math.min(1, f.t / 0.28) * 1.55;
   } else if (s === "levanta") {
@@ -1346,6 +1352,25 @@ function pe(quem) {
   return pontoDe(quem, rig.gente ? rig.pe : rig.pernaR.pe);
 }
 
+function passada(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
+  const hip = new THREE.Vector3();
+  const ponta = new THREE.Vector3();
+  const ossoHip = rig.ossos && (rig.ossos.Hips || rig.ossos.hips);
+  const ossoPe = rig.pe;
+  if (!ossoHip || !ossoPe) return { comprido: 0, frente: 0, lado: 0 };
+  ossoHip.getWorldPosition(hip);
+  ossoPe.getWorldPosition(ponta);
+  const dx = ponta.x - hip.x;
+  const dy = ponta.y - hip.y;
+  const dz = ponta.z - hip.z;
+  const yaw = f ? f.yaw : 0;
+  const frente = dx * Math.sin(yaw) + dz * Math.cos(yaw);
+  const lado = dx * Math.cos(yaw) - dz * Math.sin(yaw);
+  return { comprido: Math.hypot(dx, dy, dz), frente, lado };
+}
+
 function ossoDeCorpo(obj) {
   if (!obj.isBone || !obj.name) return false;
   if (/ik|control|slot/i.test(obj.name)) return false;
@@ -1380,6 +1405,7 @@ window.STREET = {
   medida,
   mao,
   pe,
+  passada,
   silhueta,
   dobra,
   traje,
