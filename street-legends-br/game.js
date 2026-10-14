@@ -825,6 +825,7 @@ function posarRua(rig, f, agora) {
     rig.corpo.rotation.x = 0;
   }
   if (s === "esquiva") dobrar(rig, "Abdomen", 0.3, 0, (f.lado || 1) * 0.4);
+  if (s === "idle") dobrar(rig, "Chest", Math.sin((agora || 0) * 5) * 0.18, 0, 0);
 }
 
 function posar(rig, f, agora) {
@@ -1447,6 +1448,14 @@ function passada(quem) {
   return { comprido: Math.hypot(dx, dy, dz), frente, lado };
 }
 
+function peito(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const p = new THREE.Vector3();
+  if (!rig.cabeca) return { y: 0, z: 0 };
+  rig.cabeca.getWorldPosition(p);
+  return { y: p.y, z: p.z };
+}
+
 function ossoDeCorpo(obj) {
   if (!obj.isBone || !obj.name) return false;
   if (/ik|control|slot/i.test(obj.name)) return false;
@@ -1485,6 +1494,7 @@ window.STREET = {
   peNoQuadril,
   braco,
   membro,
+  peito,
   silhueta,
   dobra,
   traje,
