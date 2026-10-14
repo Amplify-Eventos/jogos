@@ -745,14 +745,13 @@ function posarRua(rig, f, agora) {
   let axL = -1.55;
   let azR = 0;
   let azL = 0;
-  let pernaR = 0;
-  let pernaL = 0;
-  let azPerna = 0;
+  let azPernaR = 0;
+  let azPernaL = 0;
   if (s === "walk") {
-    axR = -1.55 + w * 0.4;
-    axL = -1.55 - w * 0.4;
-    pernaR = -w * 0.45;
-    pernaL = w * 0.45;
+    azR = -w * 0.4;
+    azL = w * 0.4;
+    azPernaR = -w * 0.8;
+    azPernaL = w * 0.8;
   }
   if (s === "soco" || s === "rajada" || s === "agarra") {
     let fora = u;
@@ -765,7 +764,7 @@ function posarRua(rig, f, agora) {
     axR = -1.55 * (1 - fora) - 0.2 * fora;
     azR = 1.6 * fora;
   }
-  if (s === "chute") azPerna = -1.55 * u;
+  if (s === "chute") azPernaR = -1.55 * u;
   if (s === "ombro") {
     axR = -0.85;
     axL = -0.85;
@@ -786,8 +785,8 @@ function posarRua(rig, f, agora) {
   }
   dobrar(rig, "UpperArmR", axR, 0, azR);
   dobrar(rig, "UpperArmL", axL, 0, azL);
-  dobrar(rig, "UpperLegR", pernaR, 0, azPerna);
-  dobrar(rig, "UpperLegL", pernaL, 0, 0);
+  dobrar(rig, "UpperLegR", 0, 0, azPernaR);
+  dobrar(rig, "UpperLegL", 0, 0, azPernaL);
   if (s === "queda" || s === "ko") {
     rig.corpo.rotation.x = Math.min(1, f.t / 0.28) * 1.55;
   } else if (s === "levanta") {
