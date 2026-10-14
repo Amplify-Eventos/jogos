@@ -1141,7 +1141,7 @@ let graosNoAcerto = 0;
 
 function estalo(tipo, ponto) {
   const tocou = tocar(tipo);
-  const acerto = tipo === "acerto" || tipo === "combo" || tipo === "contra" || tipo === "chao";
+  const acerto = tipo === "acerto" || tipo === "combo" || tipo === "contra" || tipo === "chao" || tipo === "guarda";
   if (!acerto || !ponto || !tocou) return { sons: sonsNoAcerto, graos: graosNoAcerto, vivos: poeira.length };
   sonsNoAcerto += 1;
   const n = 12;
