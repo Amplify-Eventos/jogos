@@ -806,6 +806,8 @@ function posarRua(rig, f, agora) {
     const k = pesoDoAcerto(f.t, f.stun || 0.52);
     dobrar(rig, "Abdomen", 0.7 * k, 0, 0);
     dobrar(rig, "Chest", 0.3 * k, 0, 0);
+    azCotovelo = 1.05 * k;
+    azCotoveloL = -1.05 * k;
   }
   dobrar(rig, "UpperArmR", axR, 0, azR);
   dobrar(rig, "UpperArmL", axL, 0, azL);
