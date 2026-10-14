@@ -790,6 +790,8 @@ function posarRua(rig, f, agora) {
   dobrar(rig, "UpperLegL", pernaL, 0, 0);
   if (s === "queda" || s === "ko") {
     rig.corpo.rotation.x = Math.min(1, f.t / 0.28) * 1.55;
+  } else if (s === "levanta") {
+    rig.corpo.rotation.x = (1 - Math.min(1, f.t / 0.45)) * 1.55;
   } else {
     rig.corpo.rotation.x = 0;
   }
@@ -931,7 +933,7 @@ function colocar(rig, f, outro, agora) {
   if (rig.gente) {
     if (rig.mixer) animar(rig, f);
     else posarRua(rig, f, agora);
-    if (f.estado === "queda" || f.estado === "ko") {
+    if (f.estado === "queda" || f.estado === "ko" || f.estado === "levanta") {
       let baixo = Infinity;
       rig.corpo.traverse((obj) => {
         if (!ossoDeCorpo(obj)) return;
