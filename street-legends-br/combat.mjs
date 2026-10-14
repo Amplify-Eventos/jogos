@@ -569,3 +569,23 @@ export function passo(luta, dt, entradaA, entradaB) {
   return luta;
 }
 
+export function assentar(luta, dt) {
+  if (!luta || luta.fase === "luta") return luta;
+  const dtOk = Math.max(0, Math.min(0.05, dt || 0));
+  for (const f of [luta.a, luta.b]) {
+    if (f.hp > 0) {
+      if (f.estado !== "idle" && f.estado !== "walk") {
+        f.estado = "idle";
+        f.t = 0;
+      }
+      continue;
+    }
+    if (f.estado !== "ko" && f.estado !== "queda") {
+      f.estado = "ko";
+      f.t = 0;
+    }
+    f.t = Math.min(1, f.t + dtOk);
+  }
+  return luta;
+}
+

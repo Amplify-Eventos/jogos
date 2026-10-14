@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { ELENCO, GOLPES, criarLuta, passo, vazio } from "./combat.mjs";
+import { ELENCO, GOLPES, criarLuta, passo, assentar, vazio } from "./combat.mjs";
 import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { clone } from "./vendor/SkeletonUtils.js";
 
@@ -1083,6 +1083,8 @@ function quadro() {
     document.getElementById("relogio").textContent = String(Math.ceil(luta.tempo));
     aviso.textContent = luta.avisoT > 0 ? luta.aviso : "";
     if (luta.fase !== "luta") abrirFim();
+  } else if (luta && (luta.fase === "vitoria" || luta.fase === "derrota" || luta.fase === "empate")) {
+    assentar(luta, dt);
   } else if (!luta) {
     lerEntrada();
   }
