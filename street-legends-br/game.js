@@ -747,6 +747,8 @@ function posarRua(rig, f, agora) {
   let azL = 0;
   let azPernaR = 0;
   let azPernaL = 0;
+  let axPernaR = 0;
+  let axPernaL = 0;
   let axJoelhoR = 0;
   let axJoelhoL = 0;
   let azCotovelo = 0;
@@ -770,6 +772,16 @@ function posarRua(rig, f, agora) {
     axR = -1.55 * (1 - fora) - 0.2 * fora;
     azR = 1.6 * fora;
     azCotovelo = (1 - fora) * 1.25;
+  }
+  if (s === "esquiva") {
+    const para = (f.lado || 1) >= 0 ? 1 : -1;
+    if (para > 0) {
+      axPernaL = -0.95;
+      axJoelhoL = 0.55;
+    } else {
+      axPernaR = 0.95;
+      axJoelhoR = 0.55;
+    }
   }
   if (s === "chute") {
     azPernaR = -1.55 * u;
@@ -799,8 +811,8 @@ function posarRua(rig, f, agora) {
   dobrar(rig, "UpperArmL", axL, 0, azL);
   dobrar(rig, "LowerArmR", 0, 0, azCotovelo);
   dobrar(rig, "LowerArmL", 0, 0, azCotoveloL);
-  dobrar(rig, "UpperLegR", 0, 0, azPernaR);
-  dobrar(rig, "UpperLegL", 0, 0, azPernaL);
+  dobrar(rig, "UpperLegR", axPernaR, 0, azPernaR);
+  dobrar(rig, "UpperLegL", axPernaL, 0, azPernaL);
   dobrar(rig, "LowerLegR", axJoelhoR, 0, 0);
   dobrar(rig, "LowerLegL", axJoelhoL, 0, 0);
   if (s === "queda" || s === "ko") {
@@ -1397,6 +1409,23 @@ function braco(quem) {
   return membro(quem, "r");
 }
 
+function peNoQuadril(quem, sufixo) {
+  const rig = quem === "b" ? rigB : rigA;
+  const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
+  const hip = new THREE.Vector3();
+  const ponta = new THREE.Vector3();
+  const ossoHip = rig.ossos && (rig.ossos.Hips || rig.ossos.hips);
+  const ossoPe = sufixo === "L" ? rig.ossos && rig.ossos.FootL : rig.pe;
+  if (!ossoHip || !ossoPe) return { lateral: 0 };
+  ossoHip.getWorldPosition(hip);
+  ossoPe.getWorldPosition(ponta);
+  const dx = ponta.x - hip.x;
+  const dz = ponta.z - hip.z;
+  const yaw = f ? f.yaw : 0;
+  const lateral = dx * Math.cos(yaw) - dz * Math.sin(yaw);
+  return { lateral };
+}
+
 function passada(quem) {
   const rig = quem === "b" ? rigB : rigA;
   const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
@@ -1451,6 +1480,7 @@ window.STREET = {
   mao,
   pe,
   passada,
+  peNoQuadril,
   braco,
   membro,
   silhueta,
