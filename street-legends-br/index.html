@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#120c09">
   <title>Street Legends BR</title>
-  <link rel="stylesheet" href="game.css?v=0.26">
+  <link rel="stylesheet" href="game.css?v=0.27">
 </head>
 <body>
   <canvas id="tela"></canvas>
@@ -66,7 +66,7 @@
   }
   </script>
   <script type="module">
-    import("./game.js?v=0.26").catch((erro) => {
+    import("./game.js?v=0.27").catch((erro) => {
       const aviso = document.getElementById("aviso");
       aviso.hidden = false;
       aviso.textContent = "Não abriu o 3D. " + (erro && erro.message ? erro.message : "");

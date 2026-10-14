@@ -749,6 +749,7 @@ function posarRua(rig, f, agora) {
   let azPernaL = 0;
   let axJoelhoR = 0;
   let axJoelhoL = 0;
+  let azCotovelo = 0;
   if (s === "walk") {
     azR = -w * 0.4;
     azL = w * 0.4;
@@ -767,6 +768,7 @@ function posarRua(rig, f, agora) {
     }
     axR = -1.55 * (1 - fora) - 0.2 * fora;
     azR = 1.6 * fora;
+    azCotovelo = (1 - fora) * 1.25;
   }
   if (s === "chute") azPernaR = -1.55 * u;
   if (s === "ombro") {
@@ -789,6 +791,7 @@ function posarRua(rig, f, agora) {
   }
   dobrar(rig, "UpperArmR", axR, 0, azR);
   dobrar(rig, "UpperArmL", axL, 0, azL);
+  dobrar(rig, "LowerArmR", 0, 0, azCotovelo);
   dobrar(rig, "UpperLegR", 0, 0, azPernaR);
   dobrar(rig, "UpperLegL", 0, 0, azPernaL);
   dobrar(rig, "LowerLegR", axJoelhoR, 0, 0);
@@ -1363,6 +1366,25 @@ function pe(quem) {
   return pontoDe(quem, rig.gente ? rig.pe : rig.pernaR.pe);
 }
 
+function braco(quem) {
+  const rig = quem === "b" ? rigB : rigA;
+  const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
+  const ombro = new THREE.Vector3();
+  const ponta = new THREE.Vector3();
+  const osso = rig.ossos && (rig.ossos.UpperArmR || rig.ossos.ShoulderR);
+  const maoOsso = rig.mao;
+  if (!osso || !maoOsso) return { comprido: 0, frente: 0, lado: 0, alto: 0 };
+  osso.getWorldPosition(ombro);
+  maoOsso.getWorldPosition(ponta);
+  const dx = ponta.x - ombro.x;
+  const dy = ponta.y - ombro.y;
+  const dz = ponta.z - ombro.z;
+  const yaw = f ? f.yaw : 0;
+  const frente = dx * Math.sin(yaw) + dz * Math.cos(yaw);
+  const lado = dx * Math.cos(yaw) - dz * Math.sin(yaw);
+  return { comprido: Math.hypot(dx, dy, dz), frente, lado, alto: dy };
+}
+
 function passada(quem) {
   const rig = quem === "b" ? rigB : rigA;
   const f = luta ? (quem === "b" ? luta.b : luta.a) : null;
@@ -1417,6 +1439,7 @@ window.STREET = {
   mao,
   pe,
   passada,
+  braco,
   silhueta,
   dobra,
   traje,
