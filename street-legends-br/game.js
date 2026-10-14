@@ -319,37 +319,83 @@ function usar(dadosA, dadosB) {
 
 function texturaChao() {
   const c = document.createElement("canvas");
-  c.width = 512;
-  c.height = 512;
+  c.width = 1024;
+  c.height = 1024;
   const g = c.getContext("2d");
-  g.fillStyle = "#3a342f";
-  g.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 900; i += 1) {
-    const tom = 40 + Math.floor(Math.random() * 28);
-    g.fillStyle = "rgb(" + tom + "," + (tom - 6) + "," + (tom - 10) + ")";
-    g.fillRect(Math.random() * 512, Math.random() * 512, 3 + Math.random() * 8, 2 + Math.random() * 4);
+  g.fillStyle = "#2c2926";
+  g.fillRect(0, 0, 1024, 1024);
+  g.fillStyle = "#514c45";
+  g.fillRect(0, 0, 1024, 150);
+  g.fillRect(0, 874, 1024, 150);
+  g.fillStyle = "#7a7468";
+  g.fillRect(0, 142, 1024, 16);
+  g.fillRect(0, 866, 1024, 16);
+  for (let i = 0; i < 1600; i += 1) {
+    const tom = 26 + Math.floor(Math.random() * 22);
+    g.fillStyle = "rgb(" + tom + "," + (tom - 2) + "," + (tom - 5) + ")";
+    g.fillRect(Math.random() * 1024, 160 + Math.random() * 700, 2 + Math.random() * 7, 2 + Math.random() * 3);
   }
-  g.fillStyle = "#6d6248";
-  g.fillRect(228, 0, 18, 512);
+  g.strokeStyle = "#161412";
+  g.lineWidth = 2;
+  [[140, 380, 280, 430, 360, 510, 520, 490], [700, 620, 820, 560, 900, 640]].forEach((p) => {
+    g.beginPath();
+    g.moveTo(p[0], p[1]);
+    for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]);
+    g.stroke();
+  });
+  g.fillStyle = "#c2b15a";
+  for (let x = 48; x < 1000; x += 96) g.fillRect(x, 498, 42, 12);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
 
-function texturaMuro() {
+function texturaGrafite() {
   const c = document.createElement("canvas");
-  c.width = 256;
-  c.height = 256;
+  c.width = 1024;
+  c.height = 512;
   const g = c.getContext("2d");
-  g.fillStyle = "#3c403c";
-  g.fillRect(0, 0, 256, 256);
-  const tintas = ["#8e2e2a", "#e0a23a", "#2f6f8f", "#d7d2c8", "#1d4d3a"];
-  for (let i = 0; i < 18; i += 1) {
-    g.fillStyle = tintas[i % tintas.length];
-    g.globalAlpha = 0.85;
-    g.fillRect(Math.random() * 200, Math.random() * 180, 30 + Math.random() * 80, 12 + Math.random() * 36);
+  g.fillStyle = "#3e413c";
+  g.fillRect(0, 0, 1024, 512);
+  g.strokeStyle = "#2c2e2b";
+  g.lineWidth = 4;
+  for (let y = 0; y <= 512; y += 64) {
+    g.beginPath();
+    g.moveTo(0, y);
+    g.lineTo(1024, y);
+    g.stroke();
   }
-  g.globalAlpha = 1;
+  for (let x = 0; x <= 1024; x += 140) {
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x, 512);
+    g.stroke();
+  }
+  function letra(x, y, tinta, linha) {
+    g.fillStyle = tinta;
+    g.beginPath();
+    g.moveTo(x, y + 90);
+    g.quadraticCurveTo(x + 16, y, x + 78, y + 8);
+    g.quadraticCurveTo(x + 138, y - 16, x + 146, y + 78);
+    g.quadraticCurveTo(x + 156, y + 168, x + 74, y + 150);
+    g.quadraticCurveTo(x + 8, y + 162, x, y + 90);
+    g.fill();
+    g.strokeStyle = linha;
+    g.lineWidth = 10;
+    g.stroke();
+    g.fillStyle = linha;
+    g.fillRect(x + 64, y + 148, 9, 42);
+  }
+  letra(70, 150, "#c4483a", "#140e0c");
+  letra(250, 128, "#e0a23a", "#140e0c");
+  letra(440, 156, "#2f6f8f", "#0c1216");
+  letra(630, 136, "#d8d2c6", "#140e0c");
+  g.strokeStyle = "#8e2e2a";
+  g.lineWidth = 16;
+  g.beginPath();
+  g.moveTo(60, 360);
+  g.quadraticCurveTo(420, 312, 820, 372);
+  g.stroke();
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -360,47 +406,70 @@ function arena() {
   const lua = new THREE.DirectionalLight(0xe7eef8, 1.45);
   lua.position.set(-4, 8, 2);
   cena.add(lua);
-  const poste = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 3.2, 8), cor("#2a241c"));
-  poste.position.set(-2.4, 1.6, -3.2);
-  cena.add(poste);
-  const lampada = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), new THREE.MeshBasicMaterial({ color: 0xf0c36a }));
-  lampada.position.set(-2.4, 3.15, -3.2);
-  cena.add(lampada);
-  const quente = new THREE.PointLight(0xf0b45a, 2.4, 14);
-  quente.position.copy(lampada.position);
-  cena.add(quente);
 
   const chao = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshLambertMaterial({ map: texturaChao() }));
   chao.rotation.x = -Math.PI / 2;
+  chao.userData.peca = "chao";
   cena.add(chao);
-
-  const muroMat = new THREE.MeshLambertMaterial({ map: texturaMuro() });
-  const altos = [
-    [-8, 1.1, 0, 0.4, 2.2, 16],
-    [8, 1.1, 0, 0.4, 2.2, 16],
-    [0, 1.1, -8, 16, 2.2, 0.4],
-    [0, 1.1, 8, 16, 2.2, 0.4]
-  ];
-  altos.forEach((p) => {
-    const muro = new THREE.Mesh(new THREE.BoxGeometry(p[3], p[4], p[5]), muroMat);
-    muro.position.set(p[0], p[1], p[2]);
-    cena.add(muro);
+  [-4.2, 4.2].forEach((z) => {
+    const meio = new THREE.Mesh(new THREE.BoxGeometry(14, 0.16, 0.28), cor("#7a7468", 0.86));
+    meio.position.set(0, 0.08, z);
+    meio.userData.peca = "chao";
+    cena.add(meio);
+    const calcada = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 2.4), cor("#514c45", 0.9));
+    calcada.position.set(0, 0.05, z + Math.sign(z) * 1.3);
+    calcada.userData.peca = "chao";
+    cena.add(calcada);
   });
 
-  for (let i = 0; i < 16; i += 1) {
-    const casa = new THREE.Mesh(
-      new THREE.BoxGeometry(0.8 + (i % 3) * 0.3, 1.2 + (i % 4) * 0.7, 0.8),
-      cor(i % 2 ? "#2a3138" : "#3a332c")
-    );
-    const ang = (i / 16) * Math.PI * 2;
-    casa.position.set(Math.cos(ang) * 12.5, 0.8, Math.sin(ang) * 12.5 - 2);
+  const muro = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35, 2.8, 9),
+    new THREE.MeshLambertMaterial({ map: texturaGrafite() })
+  );
+  muro.position.set(7.2, 1.4, 0);
+  muro.userData.peca = "muro";
+  cena.add(muro);
+
+  const poste = new THREE.Group();
+  const haste = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 4.2, 8), cor("#241e18"));
+  haste.position.y = 2.1;
+  haste.userData.peca = "poste";
+  poste.add(haste);
+  const bracoPoste = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.5), cor("#241e18"));
+  bracoPoste.position.set(0, 4.1, 0.7);
+  poste.add(bracoPoste);
+  const cabecaPoste = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.16, 0.72), cor("#3a342c"));
+  cabecaPoste.position.set(0, 3.96, 1.35);
+  poste.add(cabecaPoste);
+  const lampada = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.42), new THREE.MeshBasicMaterial({ color: 0xf0c36a }));
+  lampada.position.set(0, 3.86, 1.35);
+  poste.add(lampada);
+  poste.position.set(-0.6, 0, -3.8);
+  cena.add(poste);
+  const quente = new THREE.PointLight(0xf0b45a, 3.2, 16);
+  quente.position.set(-0.6, 3.8, -2.4);
+  cena.add(quente);
+
+  for (let i = 0; i < 5; i += 1) {
+    const alto = 1.4 + (i % 3) * 0.8;
+    const casa = new THREE.Mesh(new THREE.BoxGeometry(0.9, alto, 1.3), cor(i % 2 ? "#2a3138" : "#3a332c"));
+    casa.position.set(8.4, alto / 2, -3.2 + i * 1.6);
     cena.add(casa);
-    if (i % 2 === 0) {
-      const janela = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.08), new THREE.MeshBasicMaterial({ color: 0xf0c36a }));
-      janela.position.set(casa.position.x, casa.position.y + 0.3, casa.position.z + 0.45);
-      cena.add(janela);
-    }
   }
+}
+
+function rua() {
+  const n = { chao: 0, muro: 0, poste: 0 };
+  let muroY = 0;
+  let posteY = 0;
+  cena.traverse((obj) => {
+    const peca = obj.userData && obj.userData.peca;
+    if (!peca || n[peca] === undefined) return;
+    n[peca] += 1;
+    if (peca === "muro") muroY = Math.max(muroY, obj.position.y);
+    if (peca === "poste") posteY = Math.max(posteY, obj.position.y);
+  });
+  return { chao: n.chao, muro: n.muro, poste: n.poste, muroY, posteY };
 }
 
 function zerar(rig) {
@@ -897,5 +966,6 @@ window.STREET = {
   dobra,
   traje,
   rosto,
+  rua,
   escolher(id) { escolhido = id; marcarCarta(); }
 };
