@@ -23,5 +23,10 @@
     "nome": "Mahjong",
     "slug": "mahjong",
     "capa": "mahjong/art/loja-recebe.jpg"
+  },
+  {
+    "nome": "Exército Runner",
+    "slug": "exercito-runner",
+    "capa": "exercito-runner/art/loja-recebe.jpg"
   }
 ]
