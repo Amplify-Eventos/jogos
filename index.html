@@ -65,7 +65,7 @@
       a.appendChild(meta);
       return a;
     }
-    fetch("jogos.json")
+    fetch("jogos.json", { cache: "no-store" })
       .then(function (res) { return res.json(); })
       .then(function (lista) {
         if (!lista || !lista.length) {
